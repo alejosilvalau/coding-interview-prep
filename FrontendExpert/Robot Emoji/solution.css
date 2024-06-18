@@ -1,0 +1,156 @@
+:root {
+  --head-size: 150px;
+  --head-margin: 50px;
+  --head-main-color: #a4d9eb;
+  --head-border-color: #9bbcc2;
+  --head-border-size: 5px;
+  --head-border-radius: 20px;
+
+  --circle-radius: 50%;
+
+  --light-size: 30px;
+  --light-color: #ffa500;
+  --light-overlap: 5px;
+
+  --stick-width: 10px;
+  --stick-height: 15px;
+  --stick-color: #808080;
+
+  --ear-width: 10px;
+  --ear-height: 50px;
+  --ear-color: #c90a0a;
+  --ear-border-radius: 5px;
+
+  --eye-size: 30px;
+  --eye-gap: 20px;
+  --eye-padding-top: 25px;
+  --eye-color: white;
+  --eye-border-color: #00b3ff;
+  --eye-border-size: 5px;
+
+  --nose-size: 30px;
+
+  --mouth-width: 100px;
+  --mouth-height: 25px;
+  --mouth-border-size: 1px;
+  --mouth-border-radius: 20px;
+  --mouth-background-color: #dedede;
+
+  --tooth-width: 5px;
+  --tooth-height: 100%;
+  
+}
+
+.head {
+  width: var(--head-size);
+  height: var(--head-size);
+  margin: var(--head-margin);
+  border: var(--head-border-size) solid var(--head-border-color);
+  background-color: var(--head-main-color);
+  border-radius: var(--head-border-radius);
+  position: relative;
+}
+
+.light {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  top: calc(-1 * (var(--light-size) + var(--stick-height) + var(--head-border-size) - var(--light-overlap)));
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bulb {
+  width: var(--light-size);
+  height: var(--light-size);
+  margin-bottom: calc(-1 * var(--light-overlap));
+  border-radius: var(--circle-radius);
+  background-color: var(--light-color);
+  z-index: 1;
+}
+
+/* A "z-index" with a flex item creates a new stacking context */
+
+.stick {
+  width: var(--stick-width);
+  height: var(--stick-height);
+  background-color: var(--stick-color);
+}
+
+.ear {
+  --ear-edge-offset: calc(-1 * (var(--ear-width) + var(--head-border-size)));
+
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--ear-width);
+  height: var(--ear-height);
+  background-color: var(--ear-color);
+}
+
+.ear:first-of-type {
+  left: var(--ear-edge-offset);
+  border-top-left-radius: var(--ear-border-radius);
+  border-bottom-left-radius: var(--ear-border-radius);
+}
+
+.ear:last-of-type {
+  right: var(--ear-edge-offset);
+  border-top-right-radius: var(--ear-border-radius);
+  border-bottom-right-radius: var(--ear-border-radius);
+}
+
+.eyes {
+  display: flex;
+  justify-content: center;
+  gap: var(--eye-gap);
+  padding-top: var(--eye-padding-top);
+}
+
+.eye {
+  width: var(--eye-size);
+  height: var(--eye-size);
+  background-color: var(--eye-color);
+  border: var(--eye-border-size) solid var(--eye-border-color);
+  border-radius: var(--circle-radius);
+}
+
+/* The way that triangles are usually made is with borders */
+.nose {
+  width: 0;
+  height: 0;
+  border-left: calc(var(--nose-size) / 2) solid transparent;
+  border-right: calc(var(--nose-size) / 2) solid transparent;
+  border-bottom: var(--nose-size) solid var(--ear-color);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* There is no need to use absolute positioning, there are other ways */
+/* By using "justify-content: space-around" will align the elements on the x axis */
+
+.mouth {
+  display: flex;
+  justify-content: space-around;
+  width: var(--mouth-width);
+  height: var(--mouth-height);
+  border: var(--mouth-border-size) solid black;
+  border-radius: var(--mouth-border-radius);
+  background-color: var(--mouth-background-color);
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  overflow: hidden;
+}
+
+/* The "overflow: hidden" property is not necessary, but if they ever change, this is a good practice. */
+
+.tooth {
+  width: var(--tooth-width);
+  height: var(--tooth-height);
+  background-color: black;
+}
