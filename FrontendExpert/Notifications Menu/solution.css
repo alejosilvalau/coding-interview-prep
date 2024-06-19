@@ -1,0 +1,76 @@
+/* Write your code here. */
+
+:root {
+  --wrapper-width: 280px;
+  --wrapper-padding: 10px;
+  --wrapper-border-radius: 10px;
+
+  --notifications-gap: 10px;
+  --notifications-padding: 10px;
+  --notifications-border-radius: 10px;
+
+  --image-size: 100px;
+  --image-border-size: 1px;
+
+  --paragraph-gap: 10px;
+  --paragraph-font-size: 12px;
+
+  --button-font-size: 16px;
+  --button-border-radius: 10px;
+  --button-padding: 10px;
+  --button-background-color: #02203c;
+
+}
+
+#wrapper {
+  width: var(--wrapper-width);
+  padding: var(--wrapper-padding);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  row-gap: var(--notifications-gap);
+  background-color: lightgrey;
+  border-radius: var(--wrapper-border-radius);
+}
+
+h1 {
+  text-decoration: underline;
+  margin: 0;
+}
+
+.notification {
+  display: grid;
+  grid-template-areas:
+      "image text text"
+      "image text text"
+      "image text time";
+  grid-template-columns: 35fr 30fr 35fr;
+  background-color: white;
+  border-radius: var(--notifications-border-radius);
+}
+
+img {
+  grid-area: image;
+  width: var(--image-size);
+  height: var(--image-size);
+  border-radius: 50%;
+  border: var(--image-border-size) solid black;
+  
+}
+
+p {
+  grid-area: text;
+  text-wrap: wrap;
+
+}
+
+.user {
+  font-weight: bold;
+}
+
+.time {
+  grid-area: time;
+  font-size: var(--paragraph-font-size);
+  font-style: italic;
+}
