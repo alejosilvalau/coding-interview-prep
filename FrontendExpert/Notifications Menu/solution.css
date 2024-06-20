@@ -25,33 +25,42 @@
 #wrapper {
   width: var(--wrapper-width);
   padding: var(--wrapper-padding);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  row-gap: var(--notifications-gap);
-  background-color: lightgrey;
   border-radius: var(--wrapper-border-radius);
+  background-color: lightgrey;
+
 }
 
 h1 {
+  text-align: center;
+  margin: 0 0 var(--notifications-gap) 0;
   text-decoration: underline;
-  margin: 0;
 }
+
+
+
+/* id are selected with "#" and classes are selected with "." */
+
+#notifications {
+  display: flex;
+  flex-direction: column;
+  gap: var(--notifications-gap);
+}
+
+/* There are multiple ways to set up the grid in css */
 
 .notification {
   display: grid;
   grid-template-areas:
-      "image text text"
-      "image text text"
-      "image text time";
-  grid-template-columns: 35fr 30fr 35fr;
+    "photo text"
+    "photo time";
+  gap: var(--paragraph-gap);
+  padding: var(--notifications-padding);
   background-color: white;
   border-radius: var(--notifications-border-radius);
 }
 
 img {
-  grid-area: image;
+  grid-area: photo;
   width: var(--image-size);
   height: var(--image-size);
   border-radius: 50%;
@@ -59,18 +68,31 @@ img {
   
 }
 
+.time {
+  grid-area: time;
+  align-self: end;
+  justify-self: end;
+  margin: 0;
+  font-size: var(--paragraph-font-size);
+  font-style: italic;
+}
+
 p {
   grid-area: text;
   text-wrap: wrap;
-
+  margin: 0;
 }
 
 .user {
   font-weight: bold;
 }
 
-.time {
-  grid-area: time;
-  font-size: var(--paragraph-font-size);
-  font-style: italic;
+button {
+  width: 100%;
+  margin-top: var(--notifications-gap);
+  padding: var(--button-padding);
+  border-radius: var(--button-border-radius);
+  font-size: var(--button-font-size);
+  background-color: var(--button-background-color);
+  color: white;
 }
