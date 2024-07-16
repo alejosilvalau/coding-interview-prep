@@ -21,15 +21,13 @@ const restartButton = document.getElementById("restart-button");
 
 gameSquares.forEach((gameSquare, i) => {
 	gameSquare.addEventListener("click", () => {
-		const row = Math.floor(i / BOARD_WIDTH);
-		const col = i % BOARD_WIDTH;
-		makeMove(gameSquare, row, col);
+		makeMove(gameSquare);
 	});
 });
 
 restartButton.addEventListener("click", restartGame);
 
-function makeMove(gameSquare, row, col) {
+function makeMove(gameSquare) {
 	gameSquare.textContent = currentPlayer === 1 ? "X" : "O";
 	gameSquare.disabled = true;
 	numMovesDone++;
