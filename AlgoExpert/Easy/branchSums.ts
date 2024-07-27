@@ -25,12 +25,12 @@ function calculateBranchSums(
 ) {
 	if (!node) return;
 
-	const newRunningSum = runningSum + node.value;
+	runningSum += node.value;
 	if (!node.left && !node.right) {
-		sums.push(newRunningSum);
+		sums.push(runningSum);
 		return;
 	}
 
-	calculateBranchSums(node.left, newRunningSum, sums);
-	calculateBranchSums(node.right, newRunningSum, sums);
+	calculateBranchSums(node.left, runningSum, sums);
+	calculateBranchSums(node.right, runningSum, sums);
 }
