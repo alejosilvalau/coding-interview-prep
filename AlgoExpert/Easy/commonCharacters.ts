@@ -1,5 +1,5 @@
 export function commonCharacters(strings: string[]) {
-	const smallestString = getSmalestString(strings);
+	const smallestString = getSmallestString(strings);
 	const potentialCommonCharacters = new Set(smallestString);
 
 	for (const string of strings) {
@@ -9,7 +9,7 @@ export function commonCharacters(strings: string[]) {
 	return Array.from(potentialCommonCharacters);
 }
 
-function getSmalestString(strings: string[]) {
+function getSmallestString(strings: string[]) {
 	let smallestString = strings[0];
 	for (const string of strings) {
 		if (string.length < smallestString.length) {
