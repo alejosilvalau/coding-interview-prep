@@ -1,4 +1,8 @@
-// O
+// O(n) Time | O(n) Space
+// n is the length of the array
+// the O(n) space comes from the result array
+// The O(n) time comes from the fact that we have to traverse the entire two-dimensional array
+// Even if the recursive solution adds frames to the call stack, the space complexity is still O(n) because the frames added are not as many as the elements in the array
 
 export function spiralTraverse(array: number[][]) {
 	const result: number[] = [];

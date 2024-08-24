@@ -1,3 +1,8 @@
+// O(n) Time | O(n) Space
+// n is the length of the array
+// the O(n) space comes from the result array
+// The O(n) time comes from the fact that we have to traverse the entire two-dimensional array
+
 export function spiralTraverse(array: number[][]) {
 	const result: number[] = [];
 	let startRow = 0,
