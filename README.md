@@ -1,5 +1,5 @@
 # algoexpert
-This is a repository with interview prep questions from:
+This is a repository with interview prep responses from:
 * AlgoExpert
 * FrontendExpert
 * SystemsExpert
