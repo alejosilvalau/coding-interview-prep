@@ -1,5 +1,8 @@
 // O(n) time | O(n) space
 // n = number of nodes in the tree
+// It takes n space, because we are storing the values of the nodes in an array.
+// Otherwise, it would take O(d) space, due to the recursive calls, where d is the depth of the tree.
+// Meaning that it would occupy d frames on the call stack.
 
 class BST {
 	value: number;
