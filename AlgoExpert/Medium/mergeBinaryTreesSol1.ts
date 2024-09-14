@@ -2,6 +2,7 @@
 // n = number of nodes in the smaller binary tree
 // h = is the height of the shorter tree
 // The worst case scenario is a Linked List, which results in O(n) space complexity
+// Iterative solution
 
 // This is an input class. Do not edit.
 export class BinaryTree {

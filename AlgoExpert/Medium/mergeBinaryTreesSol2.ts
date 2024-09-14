@@ -1,6 +1,7 @@
 // O(n) time | O(h) space
 // n = number of nodes in the smaller binary tree
 // h = is the height of the shorter tree
+// Recursive solution
 
 export class BinaryTree {
 	value: number;
