@@ -20,7 +20,7 @@ export class Node {
 	// and adding e elements on the queue at each iteration
 	//
 	// O(v) comes from the worst case scenario, in which all the nodes are
-	// childrens of the first node. In that case, the queue would have v
+	// children's of the first node. In that case, the queue would have v
 	// elements at some point.
 	// Plus, comes from the length of the return array.
 
