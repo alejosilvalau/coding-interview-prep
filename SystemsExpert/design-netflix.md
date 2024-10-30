@@ -62,3 +62,5 @@ The engine would probably have some machine learning model, that gets fed in the
 - uID1 pointing to an stack ranking of videos
 
 The output of the data would depend on the data science department or the data that one thinks that is meaningful for the engine. The Map-Reduce function could be modified in different ways.
+
+![netflix-design](./design-netflix.png)
