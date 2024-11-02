@@ -6,9 +6,8 @@ The scope of the design is limited to a personal account of gooogle drive, in wh
 - Shared business accounts
 - Sharing and permissions functionalities
 - etc.
-are out of the question.
 
-The files and folders stored in google 
+are out of the question. The scope is limited to the files and folders stored in google 
 
 ## Scope
 - CRUD operations (Folders and Files), plus downloading files.
