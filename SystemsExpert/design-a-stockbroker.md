@@ -49,6 +49,7 @@ The API could look like the following:
 - type: enum: ["buy", "sell"],
 - quantity: integer,
 - status: enum: ["placed", "executed", "filled", "rejected"],
+- reason: string,
 - createdAt: date
 
 #### Trades:
@@ -72,11 +73,53 @@ To complement the SQL Table for customer balances, the system would probably nee
 This makes the platform future proof, for adding functionality for listing trades and orders. That's why having all the trades and orders stored in a SQL table would make sense. 
 
 The table could look like this:
-### trades
-- id (Primary key, Auto Incremented Integer or randoly generated String)
-- c_id (Customer ID, uuid)
-- s_t (Stock Ticker, string)
-- type
-- quant
-- status
-- c_at
+### trades 
+- id INT // Primary key, Auto Incremented Integer or randomly generated String
+- customer_id UUID_VALUE
+- stock_ticker VARCHAR(6)
+- type ENUM('buy', 'sell')
+- quant INT
+- status ENUM('placed', 'executed', 'filled', 'rejected')
+- reason VARCHAR(100) // A human readable reason of why a trade was rejected or filled
+- c_at DATE
+
+### balances
+- id INT // Primary key, Auto Incremented Integer or randomly generated String
+- customer_id UUID_VALUE
+- amount FLOAT
+- last_modified DATE
+
+
+## Trade Execution
+Placing trades is a very taxing operation to the machine, because of the amount that are being handled every second. 
+
+The server doesn't need any type of caching. Because it follows a Queue / FIFO structure, in which the firt trade that gets in is also the first that gets out and executed.
+
+The Load Balancer (LB) could use a Round Robin approach. Because we don't care which client's request gets forwarded to which server.
+
+The only two important things when executing a trade are:
+- The customer has enough money on the exchange
+- The orders gets forwarded in order, because the market orders get executed regardless of the price
+
+The tables gets updated after the API has already talked to the exchange.
+
+As the API Servers handle too much operations, we would need to add another layer of servers to making the API Request on itself. These would be called "Workers". 
+
+The "Workers" would make: 
+- Calls to the API of the exchange,
+- Wait for responses from it,
+- Update the SQL Tables
+
+As we are using a Round-Robin LB Approach, there could be 2 different servers with trades from the same customer. This could get out of hand very quickly. Because two or more servers could try to make updates to the same customer registry at the same time.
+
+This problem could be solved by using a "Publish / Subscribe Messaging System" in which specific trades by an specific customer / specific customers would be routed to a Messaging Service. For instance, at a special topic or channel for the customer or a set of customers. In which, the same customer would always be routed to the same topic.
+
+The Workers Servers would then:
+1. Subscribe to those topics / channels
+2. Watch for new trades or notifications, or messages coming in
+3. Grab the messages off the message queues
+4. Then talking to the exchange
+
+
+
+![stockbroker-design](./design-a-stockbroker.png)
