@@ -110,6 +110,8 @@ The "Workers" would make:
 - Wait for responses from it,
 - Update the SQL Tables
 
+The cluster of workers is necessary for the HA aspect.
+
 As we are using a Round-Robin LB Approach, there could be 2 different servers with trades from the same customer. This could get out of hand very quickly. Because two or more servers could try to make updates to the same customer registry at the same time.
 
 This problem could be solved by using a "Publish / Subscribe Messaging System" in which specific trades by an specific customer / specific customers would be routed to a Messaging Service. For instance, at a special topic or channel for the customer or a set of customers. In which, the same customer would always be routed to the same topic.
@@ -120,6 +122,36 @@ The Workers Servers would then:
 3. Grab the messages off the message queues
 4. Then talking to the exchange
 
+In that way, each specific customer / set of customers are channeled together. Avoiding making changes to a single registry from multiple servers at the same time. Additionally, once-delivery gets guaranteed never losing a trade.
 
+## System Details
+To create this system, we could use a service like Kafka or Google Cloud Pub/Sub. 
+
+To make sure of the stickiness on the LB, we would hash the client by it's ID.
+
+To avoid failure at the worker level, we could use leader election. Therefore, at any given point in time, one server is the leader. The leader takes care of the messages coming from the topic and the logic of contacting the exchange. To start, 3 workers is enough. Then it can be expanded. 5 workers would also make sense.
+
+Each cluster would subscribe to one topic. 
+
+Let's say that an hour has 4000 Seconds (Rough numbers, in reality is 3600 Seconds). Then lets suppose we have 25 Hours in a day. Then 4000 * 25 == 100.000 Seconds in a day. As we have 1.000.000 Trades in a day, we end up having 1.000.000 / 100.000 == 10 Trades / Second.
+
+As we can only trade on Trading Hours, the trades are bunch up in a part of the day. Lets say that we have then 30 Trades / Second, only taking into account trades on Trading Hours (1/3 of the day, and no weekends).
+
+Ideally then, we would have 30 Clusters Of Workers or more. So that, each one needs to handle less than 1 trade a second. For example, 100 Clusters and a 100 Topics would be reasonable.
+
+The Clusters of servers are also horizontally scalable. And the Workers themselves are vertically scalable. And at the end, the system is dependant of the exchange API and how fast it responds.
+
+## Logic At The Exchange Level
+When a trade has been executed by a client, we have stored it on the trades table. And the status changed to "placed".
+
+Then a Pub / Sub Message has been created. Which got routed to a topic. The leader of the worker servers, given the next message of the topic, decides what to do.
+
+The message contains only the "customer_id". And by querying the database, the workers gets the least recent trade for the customer from the "trades" table. Depending on the status of that trade, the leader would go to the exchange or do nothing.
+- If the least recent trade is not "filled" or "rejected", then the new trade goes to the exchange
+- This means that the cluster would search for trades that are "placed" or "executed"
+
+On the exchange, the system would wait until the exchange has a response for the trade which are "placed". But if the least recent trade has been "executed", then the new trade gets "placed".
+
+SQL Query of the least recent trade:
 
 ![stockbroker-design](./design-a-stockbroker.png)
