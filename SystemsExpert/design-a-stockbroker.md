@@ -75,13 +75,14 @@ This makes the platform future proof, for adding functionality for listing trade
 The table could look like this:
 ### trades 
 - id INT // Primary key, Auto Incremented Integer or randomly generated String
-- customer_id UUID_VALUE
+- customer_id UUID_VALUE (Index on this column)
 - stock_ticker VARCHAR(6)
 - type ENUM('buy', 'sell')
 - quant INT
 - status ENUM('placed', 'executed', 'filled', 'rejected')
 - reason VARCHAR(100) // A human readable reason of why a trade was rejected or filled
-- c_at DATE
+- created_at DATE
+- executed_at DATE
 
 ### balances
 - id INT // Primary key, Auto Incremented Integer or randomly generated String
@@ -153,5 +154,41 @@ The message contains only the "customer_id". And by querying the database, the w
 On the exchange, the system would wait until the exchange has a response for the trade which are "placed". But if the least recent trade has been "executed", then the new trade gets "placed".
 
 SQL Query of the least recent trade:
+```SQL
+SELECT * FROM trades WHERE customer_id = 'c1' AND (status = 'placed' OR status = 'executed') ORDER BY created_at ASC LIMIT 1;
+```
+
+If there is another trade from the specific Customer Id which is in 'placed' state. Then the API would make an API Call to the exchange's API and mark the status of the previous trade as 'executed'. The goal is to never have a trade to hang.
+
+On the call to the API of the exchange, there will be a callback to the exchange that will be sent.
+- This callback function would be in charge of updating the balances table and the trades table.
+- It would be also in charge of marking the status of the trade as 'filled' or 'rejected'.
+- The callback function is guaranteed to be called by the exchange.
+
+Then the message can be marked as done. Meaning that it can be left out of the messaging topic.
+
+If the status of the trade is 'executed', then the worker would make an API Request to the Exchange's API to see if the trade is still 'executed' and not in 'filled' or 'rejected' state. If that's the case, then it would just wait. Then eventually, the trade would be modified by the callback function, changing the status from 'executed' to either 'filler' or 'rejected'.
+- The same would happen by trades that are 'placed'. They would change to 'executed' instead by the callback function.
+
+## The Callback Function
+The Exchange would call the callback function when the trade completes. If the order gets 'filled', the exchange's API would make a request to either a worker server, or a separate server. This request would query or write to the "balances" and the "trades" tables.
+- It would update the "state", and the "reason" of the trade on the "trades" table.
+- It would update the "balance" for the "customer_id" on the "balances" table.
+
+This logic should not be executed more than once by any means. Therefore, there must be an "if statement" in which rollbacks the transaction if the trade has already been completed. Updating the customer balance is not an idempotent operation, and should be treated as such.
+
+The callback would then:
+- If the trade is a buy order, would deduct the balance from the "customer_id"
+```SQL
+UPDATE balances (amount) SET ... WHERE customer_id = 'c1';
+```
+- Then would change the status of the trade, to 'filled'. It would also modify the "reason", which is equal for every "filled" trade, and the "executed_at" which would be given by the exchange at the time of execution
+```SQL
+UPDATE trades (status, reason, executed_at) SET status = 'filled', reason = 'Trade Completed', executed_at = GETDATE() WHERE id = ...;
+```
+
+If dealing with a rejected order, then the update balance query would not happen. But it would still update the "status" to 'rejected'. The trade "reason" to the reason why it was rejected. And would still call the "GETDATE()" function on the "executed_at" column.
+
+After the queries has been fulfilled, the server updating the tables would return a 200 message to the Exchange's API. 
 
 ![stockbroker-design](./design-a-stockbroker.png)
