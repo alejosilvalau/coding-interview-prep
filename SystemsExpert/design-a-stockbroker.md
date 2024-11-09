@@ -79,7 +79,7 @@ The table could look like this:
 - stock_ticker VARCHAR(6)
 - type ENUM('buy', 'sell')
 - quant INT
-- status ENUM('placed', 'executed', 'filled', 'rejected')
+- status ENUM('placed', 'executed', 'filled', 'rejected') (Index on this column as well)
 - reason VARCHAR(100) // A human readable reason of why a trade was rejected or filled
 - created_at DATE
 - executed_at DATE
@@ -189,6 +189,30 @@ UPDATE trades (status, reason, executed_at) SET status = 'filled', reason = 'Tra
 
 If dealing with a rejected order, then the update balance query would not happen. But it would still update the "status" to 'rejected'. The trade "reason" to the reason why it was rejected. And would still call the "GETDATE()" function on the "executed_at" column.
 
-After the queries has been fulfilled, the server updating the tables would return a 200 message to the Exchange's API. 
+After the queries has been fulfilled, the server updating the tables would return a 200 message to the Exchange's API. Then it would notify the worker if the customer still needs attention, to avoid missing trades.
+
+This way, the worker would pick up the next trade of the same customer if that was the case. 
+
+This means that if on the same channel, there was a trade with an status as "placed". The worker then would pick that trade.
+
+From there, the trade would be picked up by the worker and sent to the exchange if that's the case. The worker then would wait for the exchange 200 response by the extra server that the exchange communicates to.
+- If the worker receives another trade by the same customer, before executing the previous trade, it would skip it until receivig the 200 message from the server that the exchange communicates to.
+- This would be executed by querying the least recent trade, and seeing it's status.
+
+In this way, even if there is a third trade that the same customer makes without having resolved the other 2 before, the worker would find that it is on "placed" status, and won't execute it anyways.
+
+## Network Partitions And Errors
+In any place of the system, there could be network errors:
+- The trade has been placed, but it has never been placed by the exchange.
+- The trade itself is in progress, but the callback from the exchange got lost.
+
+This is really bad when dealing with people's money. Therefore, we may want to have another auxiliary service which is a "Reaper Service".
+
+This last auxiliary service would periodically, like every 10 or 5 seconds, query all the trades in the trade's table which are "placed" or "executed".
+
+It would then check if they are not being handled. In that case, it would have the job of going to the exchange and handling them.
+
+As we have the index from the "customer_id" and the "status", the service can easily access this hang trades and execute them.
+
 
 ![stockbroker-design](./design-a-stockbroker.png)
