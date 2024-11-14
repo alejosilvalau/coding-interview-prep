@@ -78,6 +78,61 @@ The SQL table is preferred on this design, due to the natural structure of the d
 Which lends itself on the relational DB model.
 
 ## SQL Tables
+We would need the following tables to support the features required for the entire system:
+### Orders
+This table stores all the orders from Amazon. Each row represents an order.
+```SQL
+CREATE TABLE orders (
+  orderId UUID PRIMARY KEY,
+  customerId UUID,
+  orderStatus ENUM('', '', '', ...),
+  items JSON,
+  price INT,
+  paymentInfo JSON,
+  shippingAddress VARCHAR(255),
+  timestamp DATETIME,
+  other JSON
+);
+```
 
+### Carts
+The table stores all the carts for each user on Amazon. Each row represents a cart. For this exercise, each customer can only have one cart.
+```SQL
+CREATE TABLE carts (
+  cartId UUID PRIMARY KEY,
+  customerId UUID,
+  items JSON,
+);
+```
+
+### Items
+The table will store all the items available on Amazon. Each row represents an item.
+```SQL
+CREATE TABLE items (
+  itemId UUID PRIMARY KEY,
+  name VARCHAR(255),
+  description TEXT,
+  price INT,
+  currency ENUM('usd', 'eur', 'jpy', ...),
+  other JSON
+);
+```
+
+## Core User Functionality
+The user will search for an item, with a search query. The servers will return the items taking into account the stock. Then the user will add items to the cart and start the checkout to submit the order.
+
+With this in mind, the following are the endpoints for the APIs:
+```javascript
+getItemCatalog(search);
+```
+This method will fetch the API endpoint when the users are searching for items. The request will be routed by the API servers to the "smart search-results" auxiliary service. Which is an external server that:
+- Interacts directly with the items table
+- Caches item searches that are popular
+  - The goal of the cache is to reduce latencies
+  - It is based on the search query, the location, age and lots of other factors that fits best with the specific user persona
+- Returns the results
+- It also performs lots of logic to get the best items
+  - These items will be the ones that fits the search query the most
+  - There is probably some machine learning involved
 
 ![amazon-design](./design-amazon.png)
