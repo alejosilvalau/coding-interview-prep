@@ -85,13 +85,37 @@ This table stores all the orders from Amazon. Each row represents an order.
 CREATE TABLE orders (
   orderId UUID PRIMARY KEY,
   customerId UUID,
-  orderStatus ENUM('', '', '', ...),
+  orderStatus ENUM('submitted', 'processing', 'shipped', 'delivered', 'canceled'),
   items JSON,
   price INT,
   paymentInfo JSON,
   shippingAddress VARCHAR(255),
   timestamp DATETIME,
   other JSON
+);
+```
+The "items" column looks like:
+```JSON
+[
+  {
+    itemId: "aab5d5fd-70c1-11e5-a4fb-b026b977eb28",
+    quantity: 3
+  }, 
+  {
+    itemId: "3cc7f7dc-70c5-11e5-a4fb-b026b977eb28",
+    quantity: 5
+  },
+  ...
+]
+```
+
+### Aggregated Stock
+The table will store the aggregated stock of the items available on Amazon. Each row represents an item. The stock amount for each item is aggregated sum from all Amazon warehouses.
+```SQL
+CREATE TABLE aggregated_stock (
+  itemId UUID PRIMARY KEY,
+  stock INT,
+  FOREIGN KEY (itemId) REFERENCES items(itemId) ON DELETE CASCADE,
 );
 ```
 
@@ -103,6 +127,20 @@ CREATE TABLE carts (
   customerId UUID,
   items JSON,
 );
+```
+The "items" column looks like:
+```JSON
+[
+  {
+    itemId: "aab5d5fd-70c1-11e5-a4fb-b026b977eb28",
+    quantity: 3
+  }, 
+  {
+    itemId: "3cc7f7dc-70c5-11e5-a4fb-b026b977eb28",
+    quantity: 5
+  },
+  ...
+]
 ```
 
 ### Items
@@ -134,5 +172,31 @@ This method will fetch the API endpoint when the users are searching for items. 
 - It also performs lots of logic to get the best items
   - These items will be the ones that fits the search query the most
   - There is probably some machine learning involved
+
+This endpoint will also fetch the stocks of the selected items from the "aggregated_stock" table.
+
+```javascript
+updateCartItemQuantity(itemId, quantity);
+```
+This endpoint is called by users when adding or removing items from the cart. The requests directly write to the "carts" table. Users can only call the endpoint when there is enough stock in the "aggregated_stock" tables
+
+```javascript
+beginCheckout() & cancelCheckout()
+```
+These endpoints are called when the user begins or cancels the checkout process.
+
+The "beginCheckout()" request calls for another read from the "aggregated_stock" table for the items on cart.
+- If some of the items are not in stock anymore, the UI alerts the user
+- If there are enough stock for all the items, the API servers would then write to the "aggregated_stock" table and decrease the requested quantity from the items on the cart.
+
+The "cancelCheckout()" request writes to the "aggregated_stock" table increasing the stock of the items that has been canceled, effectively "unreserving" the items. It also gets triggered after 10 minutes of being in the checkout process
+
+All the writes to the "aggregated_stock" table are ACID transactions (Atomicity, Consistency, Isolation, and Durability). Which means that transactions are happening one by one, and the stock will always be on a correct state. There isn't the case that two users are consuming the same quantity for stock.
+
+```javascript
+submitOrder(), cancelOrder(), & getMyOrders()
+```
+The "submitOrder()" request will go to the API servers and then to the DB. It will then empty the cart of the user from the "carts" table, and go to the "orders" table and write a new order.
+
 
 ![amazon-design](./design-amazon.png)
