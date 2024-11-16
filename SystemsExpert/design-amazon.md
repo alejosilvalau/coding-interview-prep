@@ -79,6 +79,54 @@ Which lends itself on the relational DB model.
 
 ## SQL Tables
 We would need the following tables to support the features required for the entire system:
+
+### Items
+The table will store all the items available on Amazon. Each row represents an item.
+```SQL
+CREATE TABLE items (
+  itemId UUID PRIMARY KEY,
+  name VARCHAR(255),
+  description TEXT,
+  price INT,
+  currency ENUM('usd', 'eur', 'jpy', ...),
+  other JSON
+);
+```
+
+### Carts
+The table stores all the carts for each user on Amazon. Each row represents a cart. For this exercise, each customer can only have one cart.
+```SQL
+CREATE TABLE carts (
+  cartId UUID PRIMARY KEY,
+  customerId UUID,
+  items JSON,
+);
+```
+The "items" column looks like:
+```JSON
+[
+  {
+    itemId: "aab5d5fd-70c1-11e5-a4fb-b026b977eb28",
+    quantity: 3
+  }, 
+  {
+    itemId: "3cc7f7dc-70c5-11e5-a4fb-b026b977eb28",
+    quantity: 5
+  },
+  ...
+]
+```
+
+### Aggregated Stock
+The table will store the aggregated stock of the items available on Amazon. Each row represents an item. The stock amount for each item is aggregated sum from all Amazon warehouses.
+```SQL
+CREATE TABLE aggregated_stock (
+  itemId UUID PRIMARY KEY,
+  stock INT,
+  FOREIGN KEY (itemId) REFERENCES items(itemId) ON DELETE CASCADE,
+);
+```
+
 ### Orders
 This table stores all the orders from Amazon. Each row represents an order.
 ```SQL
@@ -109,23 +157,18 @@ The "items" column looks like:
 ]
 ```
 
-### Aggregated Stock
-The table will store the aggregated stock of the items available on Amazon. Each row represents an item. The stock amount for each item is aggregated sum from all Amazon warehouses.
-```SQL
-CREATE TABLE aggregated_stock (
-  itemId UUID PRIMARY KEY,
-  stock INT,
-  FOREIGN KEY (itemId) REFERENCES items(itemId) ON DELETE CASCADE,
-);
-```
+### Warehouse Orders
+This table stores all the orders that the different Amazon warehouses get. Each row represents a warehouse order. The warehouse orders could be a normal Amazon order, or a subset of Amazon orders.
 
-### Carts
-The table stores all the carts for each user on Amazon. Each row represents a cart. For this exercise, each customer can only have one cart.
 ```SQL
-CREATE TABLE carts (
-  cartId UUID PRIMARY KEY,
-  customerId UUID,
+CREATE TABLE warehouse_orders (
+  warehouseOrderId UUID PRIMARY KEY,
+  parentOrderId UUID,
+  warehouseId UUID,
+  orderStatus ENUM('submitted', 'processing', 'shipped', 'delivered', 'canceled'),
   items JSON,
+  shippingAddress VARCHAR(255),
+  FOREIGN KEY (parentOrderId) REFERENCES orders(orderId) ON DELETE CASCADE,
 );
 ```
 The "items" column looks like:
@@ -143,18 +186,23 @@ The "items" column looks like:
 ]
 ```
 
-### Items
-The table will store all the items available on Amazon. Each row represents an item.
+### Warehouse Stock
+This table stores the item stock in Amazon warehouses. Each row represents a pairing of {item, warehouse}.
+
 ```SQL
-CREATE TABLE items (
+CREATE TABLE warehouse_stock (
   itemId UUID PRIMARY KEY,
-  name VARCHAR(255),
-  description TEXT,
-  price INT,
-  currency ENUM('usd', 'eur', 'jpy', ...),
-  other JSON
+  warehouseId UUID,
+  physicalStock INT,
+  availableStock INT,
+  FOREIGN KEY (itemId) REFERENCES items(itemId) ON DELETE CASCADE,
+  FOREIGN KEY (warehouseId) REFERENCES warehouse_orders(warehouseId) ON DELETE CASCADE
 );
 ```
+
+The "physicalStock" field represents the item's physical stock in a warehouse in specific, which acts as a source of truth. It will only go up when a new item physically shows up. And goes down when it gets shipped or the item gets thrown out.
+
+Whereas the "availableStock" field represents the available stock in the warehouse, which gets decreased when the order gets assigned to the warehouse.
 
 ## Core User Functionality
 The user will search for an item, with a search query. The servers will return the items taking into account the stock. Then the user will add items to the cart and start the checkout to submit the order.
@@ -197,6 +245,22 @@ All the writes to the "aggregated_stock" table are ACID transactions (Atomicity,
 submitOrder(), cancelOrder(), & getMyOrders()
 ```
 The "submitOrder()" request will go to the API servers and then to the DB. It will then empty the cart of the user from the "carts" table, and go to the "orders" table and write a new order.
+
+When submitting an order, it doesn't affect the "aggregated_stock" table. Because it was already consumed by "beginCheckout()".
+
+The "cancelOrder()" request will set the "orderStatus" of the specific "orderId" to 'canceled' and will increase the stock of the items in the "aggregated_stock" table. It can only be called if the order has not been shipped yet.
+
+The "getMyOrders()" request will read from the "orders" table, and return a list of orders.
+
+## Core Warehouse Functionality
+The warehouses works with an external service, which is the "Order Assignment Service". This service has some smart logic to figure out "what the most optimal warehouses are?" based on:
+- Shipping address
+- Warehouse
+- Location
+- Machine learning
+- Stock of the warehouses
+
+On the 
 
 
 ![amazon-design](./design-amazon.png)
