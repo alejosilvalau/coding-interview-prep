@@ -202,7 +202,9 @@ CREATE TABLE warehouse_stock (
 
 The "physicalStock" field represents the item's physical stock in a warehouse in specific, which acts as a source of truth. It will only go up when a new item physically shows up. And goes down when it gets shipped or the item gets thrown out.
 
-Whereas the "availableStock" field represents the available stock in the warehouse, which gets decreased when the order gets assigned to the warehouse.
+Whereas the "availableStock" field represents the available stock in the warehouse. It goes up for the same reason as the "physicalStock", but gets decreased when the order gets assigned to the warehouse or when the item gets thrown out.
+
+The difference is that, "physicalStock" for the item gets decreased when the order gets shipped. Whereas, the "availableStock" for the item gets decreased when the order gets assigned to the warehouse.
 
 ## Core User Functionality
 The user will search for an item, with a search query. The servers will return the items taking into account the stock. Then the user will add items to the cart and start the checkout to submit the order.
@@ -260,7 +262,16 @@ The warehouses works with an external service, which is the "Order Assignment Se
 - Machine learning
 - Stock of the warehouses
 
-On the 
+The "Order-assignment service" will read from the "orders" table, figure out the best way to split orders up based on the items listed above, and write the final warehouse orders to the "warehouse_orders" table.
 
+To know which warehouses has the items of the orders and the amount of them, the "Order-assignment service" relies on the "availableStock" of the items ordered from the "warehouse_stock" table.
+- When assigning there is a new order assigned to the warehouse, the "availableStock" decreases from the "warehouse_stock" table.
+- The "availableStock" values ar re-increased if the order ends up being cancelled.
+
+When a warehouse gets a new item on stock, lose an item on stock or physically ship the assigned orders, the "physicalStock" values from the "warehouse_stock" will get updated. When there is a new item on stock or lose some of the stock, the values from the "aggregated_stock" table for the specific items will also get updated.
+
+This last part is not necessary when the orders assigned to warehouses gets shipped, since the "aggregated_stock" table has already been updated on the client side during the checkout process.
+
+When the "Order-Assignment Service" assigns a new order, it would probably alert the warehouse to check the "warehouse_orders" table. Or maybe the warehouses would pull every 30 minutes the new orders that they need to fulfill.
 
 ![amazon-design](./design-amazon.png)
