@@ -28,7 +28,7 @@ If there are two or more users watching at the same item, and there is low stock
 
 If the item is still on stock, the system would reserve it for the user for 10 minutes or the duration of the checkout process (which can be capped at 10 minutes).
 
-The system would include what happens when orders are assigned to an specific amazon warehouse. This involes the case when having an order in which items are located at different warehouses. In this case, the order needs to be split up and the customer ends up receiving two packages instead of only one. 
+The system would include what happens when orders are assigned to an specific amazon warehouse. This involves the case when having an order in which items are located at different warehouses. In this case, the order needs to be split up and the customer ends up receiving two packages instead of only one. 
 
 This means that the system needs to solve how stock comes into place when it comes to the warehouses and delivery aspects. However, all of which is referred to delivery drivers and deliveries can be ignored.
 - The system doesn't care about if there are multiple warehouses that can fulfill the order
@@ -44,7 +44,7 @@ Even if amazon has a lots of websites and businesses, like "amazon.com", "amazon
 
 This means that we are just designing "amazon.com" and the design would be applicable to the rest of the regions. They would be identical.
 
-In terms of latencies and availability, the system should be probably **Highly Available** and really **fast search queries** (Low latencies when seraching for items). Fast order submissions is not necessary.
+In terms of latencies and availability, the system should be probably **Highly Available** and really **fast search queries** (Low latencies when searching for items). Fast order submissions is not necessary.
 
 We would be granted a HA SQL setup out of the box. Therefore, we don't need to worry about the HA setup. The focus is on:
 - DB Schemas
@@ -64,10 +64,10 @@ And we can subdivide the system even more:
 - Browsing items through a search query from the user
 - Modifying the cart
 - Starting the checkout process
-- Submitting and cancelling orders
+- Submitting and canceling orders
 
 ## High-Level System Overview
-On a set region, Users and Warehouses are going to make request to a Load Balancer (LB) with a Round-Robin technique. The LB would then redirect the request to a set of API servers. And the data would be writen to and read from the SQL table on that specific region
+On a set region, Users and Warehouses are going to make request to a Load Balancer (LB) with a Round-Robin technique. The LB would then redirect the request to a set of API servers. And the data would be written to and read from the SQL table on that specific region
 
 The SQL table is preferred on this design, due to the natural structure of the data that we are dealing with. Whether it is:
 - Items
@@ -266,7 +266,7 @@ The "Order-assignment service" will read from the "orders" table, figure out the
 
 To know which warehouses has the items of the orders and the amount of them, the "Order-assignment service" relies on the "availableStock" of the items ordered from the "warehouse_stock" table.
 - When assigning there is a new order assigned to the warehouse, the "availableStock" decreases from the "warehouse_stock" table.
-- The "availableStock" values ar re-increased if the order ends up being cancelled.
+- The "availableStock" values are re-increased if the order ends up being canceled.
 
 When a warehouse gets a new item on stock, lose an item on stock or physically ship the assigned orders, the "physicalStock" values from the "warehouse_stock" will get updated. When there is a new item on stock or lose some of the stock, the values from the "aggregated_stock" table for the specific items will also get updated.
 
