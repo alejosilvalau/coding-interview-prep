@@ -31,3 +31,34 @@ With the scale that the system is managing, the APIs needs to have a heavy load-
 When calling the CreatePost() endpoint, the system would redirect the request to a Load Balancer (LB) or a cluster of LBs.
 
 When creating a post, there isn't any caching or "server stickiness" necessary. Creating a post just means adding data to the database. This means that the LB servers could distribute the load in a Round-Robin approach.
+
+For this design, the CreatePost API call could simply look like:
+```
+CreatePost(
+  user_id: string,
+  post: data
+)
+```
+## Post Storage
+There will be a main relational database, to store most of the system data. This includes post and users. The database will have very large tables
+
+## GetNewsFeed() API
+This GetNewsFeed() API call looks like this:
+```
+GetNewsFeed(
+  user_id: string,
+  pageSize: integer,
+  nextPageToken: integer,
+) => (
+  posts: []{
+    user_id: string,
+    post_id: string,
+    post: data,
+  },
+  nextPageToken: integer,
+)
+```
+
+The **pageSize** and **nextPageToken** serve to paginate the newsfeed. This is necessary when dealing with huge amounts of data.
+
+![facebook-news-feed-design](./design-facebook-news-feed.png)
