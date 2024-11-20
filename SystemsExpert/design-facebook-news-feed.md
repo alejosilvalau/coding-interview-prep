@@ -61,4 +61,40 @@ GetNewsFeed(
 
 The **pageSize** and **nextPageToken** serve to paginate the newsfeed. This is necessary when dealing with huge amounts of data.
 
+## Feed Creation And Storage
+As Facebook serves 1 Billion users, which makes 10 million news status every day, the databases are going to be so large that fetching news feeds from the main DB when calling "GetNewsFeed()" isn't ideal:
+- It would provoke very high latencies
+- Sharding the main DB holding the posts isn't helpful neither because the different news feed would need to aggregate posts from different shards.
+
+The last one can be solved by using "cross-shard joints" when generating news feed. This is not recommended due to increase on complexity, increased latency, etc.
+
+Instead, the system can use an array of shards to store news feeds separately from the main database. 
+
+The system can also have a separated cluster of machines acting as a proxy between the main DB and the shards. this proxy will be in charge of: 
+- Aggregating posts
+- Ranking them via the ranking algorithm
+- Generating news feeds
+- Sending them to the shards every set amount of time (5, 10, 60 minutes) which would depend on the update frequency of the newsfeed.
+
+As we are assuming to have 1 Billion users at global scale, let's assume that per region there is 1/10 of that amount. We also know that each user loads the newsfeed 10 times per day on average. This means:
+```
+(100.000.000 Users per region * 10 Newsfeed loads) / 24 Hours ~= 416.666.666,667 Newsfeeds per hour
+416.666.666,667 Newsfeeds per hour / 60 Minutes / 60 seconds ~= 10.000 Queries Per Second (QPS).
+```
+
+Let's assume that each post has an average size of 10 Kb, and each newsfeed aggregates the top 1000 posts most relevant to the user. This means that we need to store 10 Mb per user. Because we have 1 Billion users, we have 10.000 Tb = 10 Pb (Petabytes) of storage in total. We can use 1000 machines of 10 Tb each as the newsfeed shards.
+```
+~10 Kb per post
+~1000 posts per news feed
+~1 billion news feed
+~10 Kb * 1000 * 1.000.000.000 = 10 Pb = 1000 * 10 Tb
+```
+The system can be sharded by user_id to distribute the newsfeed roughly evenly.
+
+When there is a call to the GetNewsFeed(), it gets redirected by the load balancer to the right newsfeed shard. The newsfeed shard returns the correct data, reading it's local disk. If the newsfeed doesn't exists on the shard, then the shard reads from the source of truth (the main DB, through the ranking service proxy) to gather the relevant posts.
+- This last section could increase latency.
+- The goal is to avoid the scenario from happening.
+
+
+
 ![facebook-news-feed-design](./design-facebook-news-feed.png)
