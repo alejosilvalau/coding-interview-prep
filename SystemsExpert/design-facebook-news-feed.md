@@ -95,6 +95,22 @@ When there is a call to the GetNewsFeed(), it gets redirected by the load balanc
 - This last section could increase latency.
 - The goal is to avoid the scenario from happening.
 
+## Writing Updates Into Feed Creation
+The shards need a mechanism to know when they should update their information and when to incorporate that new information into their news feeds. That's why the system needs a notification mechanism that communicates with the shards. This notification mechanism (Pub / Sub) will inform the shards when a new post has been created, to then the shards incorporate it into the news feed of impacted users.
+
+Each shard will subscribe to it's own topic, which will be referred as Feed Notification Topics (FNT). The publishers of the different FNTs are the Consumers (C1). 
+
+When a C1 gets a new message about a post creation:
+1. It searches the main DB, to see which users is this post relevant to. 
+    - For example, friends of the user who created the post
+2. It filters out users from other regions which will be taken care of asynchronously
+3. It maps the relevant remaining users to the FNT using the same hashing function that the "GetNewsFeed" load balancer relies on.
+
+If a user has too many friends on the region, there is a cap in the number of FNT topics that gets messaged to reduce the amount of internal traffic for each single post. 
+
+For these big users, the system will rely on the asynchronous feed creation to make the posts appear in the feeds of users that has been skipped when their individual feeds gets refreshed manually.
+
+
 
 
 ![facebook-news-feed-design](./design-facebook-news-feed.png)
