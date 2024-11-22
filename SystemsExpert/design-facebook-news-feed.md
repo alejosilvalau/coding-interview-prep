@@ -98,19 +98,29 @@ When there is a call to the GetNewsFeed(), it gets redirected by the load balanc
 ## Writing Updates Into Feed Creation
 The shards need a mechanism to know when they should update their information and when to incorporate that new information into their news feeds. That's why the system needs a notification mechanism that communicates with the shards. This notification mechanism (Pub / Sub) will inform the shards when a new post has been created, to then the shards incorporate it into the news feed of impacted users.
 
-Each shard will subscribe to it's own topic, which will be referred as Feed Notification Topics (FNT). The publishers of the different FNTs are the Consumers (C1). 
+Each shard will subscribe to it's own topic, which will be referred as Feed Notification Topics (FNT). The publishers of the different FNTs are the Consumers (C1).
 
 When a C1 gets a new message about a post creation:
-1. It searches the main DB, to see which users is this post relevant to. 
+1. It searches the main DB, to see which users is this post relevant to.
     - For example, friends of the user who created the post
 2. It filters out users from other regions which will be taken care of asynchronously
 3. It maps the relevant remaining users to the FNT using the same hashing function that the "GetNewsFeed" load balancer relies on.
 
-If a user has too many friends on the region, there is a cap in the number of FNT topics that gets messaged to reduce the amount of internal traffic for each single post. 
+If a user has too many friends on the region, there is a cap in the number of FNT topics that gets messaged to reduce the amount of internal traffic for each single post.
 
 For these big users, the system will rely on the asynchronous feed creation to make the posts appear in the feeds of users that has been skipped when their individual feeds gets refreshed manually.
 
+As this is an item-potent operation, we don't want to have duplicated posts. Therefore, the duplicate post will be handled at the "Feed Shard" level. In which, there will be extra logic to discard posts that has been already added to the NewsFeed.
 
+## Cross-Region Strategy
+After CreatePost() has been called, and reaches the Pub / Sub subscribers (SUBS), the SUBS will send a message to the "Forwarder" service that is between regions. To make this possible, the "Forwarder" service has previously been subscribed to the SUBS.
 
+The "Forwarder" job is to replicate and forward messages to other regions, replicating the logic of "CreatePost()" to other regions. This will start the entire feed-update logic on these other regions.
+
+Additional logic may be added to the forwarder to prevent the regions that the message is being replicated to, from notifying other regions about the CreatePost() call. Because this would lead to an infinite chain of replications.
+
+In other words, only the original region that the post was created on, will be on charge of replicating the post to other regions.
+
+To avoid data replication, these other regions can store posts that they have just handled to avoid replicating it again.
 
 ![facebook-news-feed-design](./design-facebook-news-feed.png)
