@@ -62,3 +62,39 @@ The method **ListPosts** needs to be paginated, since there are thousands of pos
 - pageToken
 
 And it will return a list of post of a maximum size of **pageSize**. It will additionally return a **nextPageToken**, which will be the token to input to the next call to **ListPost** to retrieve the next page of posts.
+
+## Comments
+This entity is similar to **Posts**. They need an id, the id of the user who created it, the id of the post being written into, the content as an string, and the rest of the fields that the **Posts** entity also has.
+
+**Comments** will also need a **parentId**, which will point to the Post or Comment that the Comment is written onto. This allows for the UI to be reconstructed, indenting replies. The UI will have the job of sorting comments on a given reply by "createdAt" or "votesCount".
+
+This is the resulting schema for Comments:
+```
+commentId: string,
+creatorId: string,
+postId: string,
+createdAt: timestamp,
+content: string,
+votesCount: int,
+awardsCount: int,
+parentId?: string,
+deletedAt?: timestamp,
+currentVote?: enum UP / DOWN
+```
+
+The CRUD operations for the **Comments** entity are similar to the ones used for the **Posts** entity. With the difference of **CreateComment** taking an optional parameter **parentId** pointing to the comment that is replying. 
+
+This last parameter is optional, because the UI will assume the Comment as a top-level comment for the Post if it doesn't has a **parentId** or it's value is null.
+```
+CreateComment(userId: string, postId: string, content: string, parentId?: string) => Comment
+
+EditComment(userId: string, commentId: string, content: string) => Comment
+
+GetComment(userId: string, commentId: string) => Comment
+
+DeleteComment(userId: string, commentId: string) => Comment
+
+ListComments(userId: string, postId: string, pageSize?: int, pageToken?: string) => (Comment[], nextPageToken?)
+```
+
+## Votes
