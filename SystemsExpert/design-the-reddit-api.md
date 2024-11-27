@@ -98,3 +98,43 @@ ListComments(userId: string, postId: string, pageSize?: int, pageToken?: string)
 ```
 
 ## Votes
+The entity needs to have an id, the id of the creator, the id of the target post or comment, and type. The type will be an UP / DOWN Enum. For consistency on the API design, they will also have a **createdAt** field.
+
+This is the resulting schema for Votes:
+```
+voteId: string,
+creatorId: string,
+targetId: string,
+type: enum UP / DOWN
+createdAt: timestamp
+```
+
+The API doesn't need a **GetVote** or **ListVote** methods, since they are not useful feature for the end user.
+
+On the other hand, the **CreateVote**, **EditVote** and **DeleteVote** are simple:
+- **CreateVote**: Used when a user cast a vote to a Comment or Post
+- **EditVote**: Used when a user has already cast a Vote, and casts the opposite Vote on the same Comment or Post.
+- **DeleteVote**: Used when a user already has a Vote casted to a Post or Comment, and just removes it.
+
+These are the resulting signatures for the API functions of the entity:
+```
+CreateVote(userId: string, targetId: string, type: enum UP / DOWN) => Vote
+
+EditVote(userId: string, voteId: string, type: enum UP / DOWN) => Vote
+
+DeleteVote(userId: string, voteId: string) => Vote
+```
+
+## Awards
+These are the awards given to a Comment or Post, which are obtained after a purchase has been successfully completed. For simplicity sake on this design, there will be only one type of Award.
+
+To manage them, the API can have defined two different endpoints for buying and giving away awards:
+- **BuyAwards**: Used to make the award payment and assign them to the user account. It will take a *paymentToken* which is a string that has the necessary information to process the payment.
+- **GiveAward**: Used by a user to give awards to a Post or Comment. It takes in a *targetId* as an argument, to identify the target entity.
+
+This is the resulting signature for the endpoints:
+```
+BuyAwards(userId: string, paymentToken: string, quantity: int);
+
+GiveAward(userId: string, targetId: string) => Post | Comment
+```
