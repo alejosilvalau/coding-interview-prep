@@ -64,3 +64,45 @@ CancelSubscription(channelId: string) => Subscription
 ```
 
 These are the endpoints called when a user presses the **Subscribe / Unsubscribe** button respectively.
+
+## Chat
+For the chat functionality, two different endpoints are needed as well as a **Message** entity.
+
+The schema for the **Message** entity will be the following:
+```
+sender: string, (The username of the sender)
+text: string,
+timestamp: string, (Needs to be on ISO format)
+isModerator: boolean
+```
+The **isModerator** field helps to add an indicator on the Chat's UI that the user is a moderator when it sends a message.
+
+The following are the endpoints needed:
+```
+StreamChat(channelId: string) => Message
+
+SendMessage(channelId: string, message: string, isModerator: boolean) => string | Error
+```
+The **Streamchat** endpoint opens a long-lived websocket connection, and will be called once per load. It continuously stream's chat messages.
+
+The **SendMessage** endpoint will be called when a user sends a message. The backend will take care of generating the timestamp and the Message entity, returning back the text of it. 
+
+It will return an error if the user has been banned. The UI should automatically block the user for sending messages. But in the case that the user manages to send a message even when it's blocked, the API will return an error message.
+
+To handle Twitch emotes, these could be represented with an special string format.
+- For example, the API can interpret wrapped unique emote IDs in colons with this format **":emote-id:"**.
+- Therefore, a Twitch message will look like this: **"This stream is fun :pepe:"**
+
+The UI will detect the special string format, and return the appropriate emote. The UI also avoids to display messages sent by the user that has sent the message, and avoids displaying the message received through the web socket as well. Since the messages created by the user will be displayed on the UI as soon as they get sent through the **SendMessage** endpoint.
+
+## video
+To display the video livestream, another long-lived websocket connection needs to be opened. It will be started on page load, and will stream the video.
+
+```
+StreamVideo(channelId: string, videoQuality: VideoQuality) => VideoInfo
+```
+Whenever this endpoint is called, the concurrent-viewer will be increased by the backend. This number gets stored for each stream on the backend on a database. 
+
+When the websocket connection gets terminated due to closing the tab or leaving the page, the backend will decrease the relevant concurrent-viewer count in the database.
+
+If the user pauses the video, the UI still streams the video. But it won't render it in real-time.
