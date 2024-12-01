@@ -26,7 +26,7 @@ The functionality only consist of displaying static data about the streamer. The
 
 The schema for **ChannelInfo** is the following:
 ```
-name: strng,
+name: string,
 description: string,
 currentStreamTitle: string,
 followerCount: int
@@ -106,3 +106,37 @@ Whenever this endpoint is called, the concurrent-viewer will be increased by the
 When the websocket connection gets terminated due to closing the tab or leaving the page, the backend will decrease the relevant concurrent-viewer count in the database.
 
 If the user pauses the video, the UI still streams the video. But it won't render it in real-time.
+
+## Concurrent Viewers
+To show the concurrent viewer watching the stream at any given time can be easily done by calling an endpoint every 30 seconds. The endpoint will be read from the database that stores every stream's concurrent viewer amount.
+
+```
+GetConcurrentViewers(channelId: string) => int
+```
+
+## Relationship To Channel
+Some functionalities are dependent of the relationship between the user and the streamer. For instance:
+- The user is following the streamer
+- The user is subscribed to the streamer
+- The user is banned from the streamer's chat
+
+To avoid fetching the user's profile info, and dealing with many problems:
+- Pagination
+- Low latencies
+- Etc.
+
+The API will instead have an endpoint called **GetRelationshipToChannel** which will return a new entity (**RelationshipToChannel**). This endpoint will be used to correctly display the states of the UI.
+
+The schema for the **RelationshipToChannel** entity will be the following:
+```
+isBanned: boolean,
+isFollowing: boolean,
+subscription: Subscription | null
+```
+
+And the signature for the **GetRelationshipToChannel** endpoint will be the following:
+```
+GetRelationshipToChannel(channelId: string) => RelationshipToChannel
+```
+
+If the user is banned, then it won't have access through the UI to send messages on the chat. As well as, it will to get an **Error** from calling the **SendMessage** endpoint.
