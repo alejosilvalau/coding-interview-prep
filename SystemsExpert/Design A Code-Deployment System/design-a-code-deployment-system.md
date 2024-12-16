@@ -20,3 +20,48 @@ The system will be very simple. It will be divided into two subsystems:
 Each of the subsystems will have many components inside of them.
 
 ## Build System - General Overview
+On a general view, the process of building code can be called a **job**. The build system can be designed as a queue of jobs.
+
+Each job will have a SHA, which is the commit identifier for what version of the code it should built first. Every job will also have a **name**, which is the name of the artifact created / resulting binary.
+
+As this is **langugage agnostic** of the type of code, all coding languages are handled here.
+
+From the server side of the system, we can have a pool of servers (workers) which are going to handle the work. Each worker will:
+1. take jobs out of the queue repeatedly in a FIFO manner.
+2. Build the relevant binaries
+3. Write the resulting binaries to a blob storage
+
+Blob storages are preferred in this system, because binaries are blobs of data. We can use **Google Cloud Storage** or **S3** for instance.
+
+## Build System - Job queue
+As we cannot have the queue implemented in memory, because if there is a failure on the server, the system will lose the entire state of the jobs. We are better using an SQL table.
+
+It's super important not to lose the queued jobs and past jobs, even on a power outage or server failure.
+
+## Build System - SQL Job queue
+We can make an SQL table called **jobs** on the DB, in which every record represents a job. We can also use the record-creation timestamps as the queue's ordering index.
+
+Our table will look like this:
+- id: string (The ID of the job, auto-generated)
+- created_at: timestamp
+- commit_sha: string
+- name: string (A pointer to the job's binary in blob storage)
+- status: enum('queued', 'running', 'succeeded', 'failed')
+
+On the actual implementation, the system will select the record for the dequeuing mechanism by looking at the oldest **created_at** timestamp with a 'queued' status. This means that **status** will also be an index as well as **created_at**.
+
+## Build System - Concurrency
+ACID Transactions makes it safe for hundred of workers to pick up jobs, without running the same one. The transaction will look like this:
+```
+BEGIN TRANSACTION;
+SELECT * FROM jobs_table WHERE status = 'queued' ORDER BY created_at ASC LIMIT 1;
+// If there isn't, we transaction will Rollback.
+
+UPDATE jobs_table SET status = 'running' WHERE id = prev_id //from previous query.
+```
+
+The workers will be running this transaction to dequeue the next job every 5 seconds.
+
+Lets assume that we have 100 workers dealing with the same queue. Then we will have 100 / 5 = 20 reads per second. This is easy for an SQL table to handle.
+
+## Build System - Lost Jobs
