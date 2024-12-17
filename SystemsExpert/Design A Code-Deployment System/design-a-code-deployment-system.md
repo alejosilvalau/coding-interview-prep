@@ -54,10 +54,11 @@ On the actual implementation, the system will select the record for the dequeuin
 ACID Transactions makes it safe for hundred of workers to pick up jobs, without running the same one. The transaction will look like this:
 ```
 BEGIN TRANSACTION;
-SELECT * FROM jobs_table WHERE status = 'queued' ORDER BY created_at ASC LIMIT 1;
+SELECT * FROM jobs WHERE status = 'queued' ORDER BY created_at ASC LIMIT 1;
 // If there isn't, we transaction will Rollback.
 
-UPDATE jobs_table SET status = 'running' WHERE id = prev_id //from previous query.
+UPDATE jobs SET status = 'running' WHERE id = prev_id //from previous query.
+COMMIT;
 ```
 
 The workers will be running this transaction to dequeue the next job every 5 seconds.
@@ -65,3 +66,21 @@ The workers will be running this transaction to dequeue the next job every 5 sec
 Lets assume that we have 100 workers dealing with the same queue. Then we will have 100 / 5 = 20 reads per second. This is easy for an SQL table to handle.
 
 ## Build System - Lost Jobs
+As this is a large-scale system, there are edge cases. In this system, what would happen if:
+- A worker dies in the middle of building the code?
+- Or there is network partition in the system?
+
+In average, every build will take 15 minutes. Therefore there is a high chance of one of these two happening. In this case, we want to avoid skipping a job that has been marked as 'running' but has never been finished.
+
+To solve this problem, we could add an extra column on the **jobs** table called **last_heartbeat**. This column will be updated by the worker in a heartbeat pattern while running a particular job. In other words, the worker will update the row in the table every 3-5 minutes to let the system know that they still have a job running.
+
+We can add an separated service that polls the table every 5 minutes and checks all the 'running' jobs. If the **last_heartbeat** has been modified more than 2 heartbeats ago, to leave a margin of error, then there is something wrong with that job.
+
+The service then will proceed to update the status of the relevant job from 'running' to 'queued'. This will bring the job back to the job's queue. Leaving them up to another worker to take it on.
+
+The transaction that the extra service will perform looks like this:
+```SQL
+UPDATE jobs SET status = 'queued' WHERE status = 'running' AND last_heartbeat < NOW() - 10 minutes;
+```
+
+## Build System - Scale Estimation
