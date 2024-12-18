@@ -84,3 +84,29 @@ UPDATE jobs SET status = 'queued' WHERE status = 'running' AND last_heartbeat < 
 ```
 
 ## Build System - Scale Estimation
+We have previously assumed that 100 workers would be a realistic load for the SQL to handle the load. Since a build can take up to 15 minutes, a single worker can run 4 jobs per hour. This means around 100 jobs per day, or 96 to be exact. 
+
+Given that the system needs to handle around 5000 builds per day, we would need **5000 / 100 = 50 workers** at minimum. Therefore, the estimate of 100 workers was accurate to let room for scaling.
+
+Even if the system has peaks during working hours, which means that the workload isn't uniformly spread out, we can easily add or remove workers at need. This would mean to horizontally scale the system.
+
+But we can also vertically scale the system by making each worker more powerful, and reducing the build time as a result.
+
+## Build System - Storage
+The main storage will be done through blob storages. GCS (Google Cloud Service) for instance.
+
+When a worker finish building the code of a job, the resulting binary can be stored in the GCS before updating the specific row on the **jobs** table. This ensures that the binary persisted on the GCS before updating the table row to **succeeded**.
+
+Since this system is global, we need to support multiple regions. Therefore, it makes sense to store the resulting binary on the regional blob store.
+
+The system can be designed based on regional clusters around the different regions that the system is hosted on. Each region will have a blob storage, which means a regional **GCS Bucket**. Once the worker stores the binary in the regional GCS, the worker deletes the data and is able to run another job.
+
+On the meantime, the regional blob storage will perform asynchronous replication to store the new binary in all the regional CGS buckets.As we have 5-10 regions, and 10 GB of binary files, it shouldn't take more than 5-10 minutes to replicate.
+
+This brings the total build-and-deploy duration to around 20-25 minutes, taking into acount the 15 minutes of build time, and the 5-10 minutes of replication.
+
+## Deployment System - General Overview
+
+
+
+![code-deployment-system-design](./design-a-code-deployment-system.png)
