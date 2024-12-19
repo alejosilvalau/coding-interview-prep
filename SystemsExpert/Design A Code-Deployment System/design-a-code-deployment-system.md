@@ -106,7 +106,25 @@ On the meantime, the regional blob storage will perform asynchronous replication
 This brings the total build-and-deploy duration to around 20-25 minutes, taking into acount the 15 minutes of build time, and the 5-10 minutes of replication.
 
 ## Deployment System - General Overview
+The system needs to distribute the 10 GB binaries to hundreds of thousands of machines on the actual deployment across all the regions. That's why we need:
+- A service that informs when a binary has been replicated in all regions.
+- An extra service that can serve as a source of truth for what binary should be run on all machines. This is referred as the **Target Build**.
+- A Peer-To-Peer Network for the actual machines across the world. The actual machines that the engineers uses.
+
+## Deployment System - Replication-Status Service
+We need a global service that checks the GCS bucket continuously from all regions and aggregates **the replication status** to know when a build has been successfully replicated across all the different regions.
+
+In other words, it checks for the blob stores for all the different regions to see if a given build has been replicated across all regions.
+
+Once the **Replication Manager** aggregates that the build has been replicated across all the regions, it updates the **Build Replication Status** SQL database.
+
+This database will have a table with rows containing **binary_name** and a **replication_status**. Once the binary has a **complete** replication status, it's deployable to the main build of the actual system.
+
+## Deployment System - Blob Distribution
 
 
+## Deployment System - Trigger
 
+
+## System Diagram
 ![code-deployment-system-design](./design-a-code-deployment-system.png)
