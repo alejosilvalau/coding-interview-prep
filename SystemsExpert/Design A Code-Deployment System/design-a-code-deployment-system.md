@@ -22,9 +22,9 @@ Each of the subsystems will have many components inside of them.
 ## Build System - General Overview
 On a general view, the process of building code can be called a **job**. The build system can be designed as a queue of jobs.
 
-Each job will have a SHA, which is the commit identifier for what version of the code it should built first. Every job will also have a **name**, which is the name of the artifact created / resulting binary.
+Each job will have a SHA, which is the commit identifier for what version of the code it should build first. Every job will also have a **name**, which is the name of the artifact created / resulting binary.
 
-As this is **langugage agnostic** of the type of code, all coding languages are handled here.
+As this is **language agnostic** of the type of code, all coding languages are handled here.
 
 From the server side of the system, we can have a pool of servers (workers) which are going to handle the work. Each worker will:
 1. take jobs out of the queue repeatedly in a FIFO manner.
@@ -51,7 +51,7 @@ Our table will look like this:
 On the actual implementation, the system will select the record for the dequeuing mechanism by looking at the oldest **created_at** timestamp with a 'queued' status. This means that **status** will also be an index as well as **created_at**.
 
 ## Build System - Concurrency
-ACID Transactions makes it safe for hundred of workers to pick up jobs, without running the same one. The transaction will look like this:
+ACID Transactions makes it safe for hundreds of workers to pick up jobs, without running the same one. The transaction will look like this:
 ```
 BEGIN TRANSACTION;
 SELECT * FROM jobs WHERE status = 'queued' ORDER BY created_at ASC LIMIT 1;
@@ -63,12 +63,12 @@ COMMIT;
 
 The workers will be running this transaction to dequeue the next job every 5 seconds.
 
-Lets assume that we have 100 workers dealing with the same queue. Then we will have 100 / 5 = 20 reads per second. This is easy for an SQL table to handle.
+Let's assume that we have 100 workers dealing with the same queue. Then we will have 100 / 5 = 20 reads per second. This is easy for an SQL table to handle.
 
 ## Build System - Lost Jobs
 As this is a large-scale system, there are edge cases. In this system, what would happen if:
 - A worker dies in the middle of building the code?
-- Or there is network partition in the system?
+- Or there is a network partition in the system?
 
 In average, every build will take 15 minutes. Therefore there is a high chance of one of these two happening. In this case, we want to avoid skipping a job that has been marked as 'running' but has never been finished.
 
@@ -103,7 +103,7 @@ The system can be designed based on regional clusters around the different regio
 
 On the meantime, the regional blob storage will perform asynchronous replication to store the new binary in all the regional CGS buckets.As we have 5-10 regions, and 10 GB of binary files, it shouldn't take more than 5-10 minutes to replicate.
 
-This brings the total build-and-deploy duration to around 20-25 minutes, taking into acount the 15 minutes of build time, and the 5-10 minutes of replication.
+This brings the total build-and-deploy duration to around 20-25 minutes, taking into account the 15 minutes of build time, and the 5-10 minutes of replication.
 
 ## Deployment System - General Overview
 The system needs to distribute the 10 GB binaries to hundreds of thousands of machines on the actual deployment across all the regions. That's why we need:
@@ -122,9 +122,20 @@ This database will have a table with rows containing **binary_name** and a **rep
 
 ## Deployment System - Blob Distribution
 
+As the system needs to deploy 10 GBs to hundreds of thousands of machines. Even with regional clusters, having each machine to download a 10 GB file one after the other from a regional blob store is going to be slow. 
+
+That's why a peer-to-peer network approach it's much faster and will allow the system to reach the 30 minutes time frame deployment. This means that all the regional clusters will behave as a peer-to-peer network.
 
 ## Deployment System - Trigger
+**Trigger** is what happens when an engineer presses a button on the internal UI that says **Deploy build / binary B1 globally to every machine**. This will trigger the download of the binary on all the regional peer-to-peer networks.
 
+To support multiple builds getting deployed concurrently, we need to design the system in a **Target Build** oriented manner. Which is the desired build version at any point in time.
+
+It will look like **current_build: B1**, and this record can be stored in some dynamic configuration service (key-value store) like **Etcd** or **ZooKeeper**. The system will have a global **Target Build** and regional ones. The regional key-value stores will hold the configuration for that cluster about what build should be running.
+
+When an engineer presses the **Deploy build / binary B1 globally to every machine** button, the global K-V store will get updated. The regional K-V stores will be continuously polling the global K-V store every 10 seconds for updates in their own K-V store.
+
+The machines in the peer-to-peer network will be polling the regional K-V store. When the **current_build** changes, they will fetch that new build from the P2P network and run the new binary.
 
 ## System Diagram
 ![code-deployment-system-design](./design-a-code-deployment-system.png)
