@@ -29,3 +29,35 @@ The entire system can be divided into 3 core components:
 The second bullet point will get divided further.
 
 ## Static UI Content
+There will be public assets such as images and JavaScript bundles stored in a blob store. We can use Amazon S3 or Google Cloud Storage (GCS) for that matter.
+
+Since the audience of the website is global, and the main focus is to have a responsive site, a **Content Delivery Network** (CDN) will be necessary. This is crucial on mobile devices, since the internet connection tend to be slower than on Desktop.
+
+## Main Clusters And Load Balancing
+The main 2 regions that visit the AlgoExpert.io website are **U.S. and India**. Therefore, it's a must to have the 2 primary clusters of servers located on those regions.
+
+The system can implement DNS load balancing to route API requests to a cluster closest to the user that's fetching the request. Within a region, they system could have **path-based load balancing** to separate the different services such as:
+- Payments
+- Authentication
+- Code execution
+
+This means that a single request could take different paths, even on the same server, depending on what's the main purpose of that request. And comes especially in handy when running the code execution engine, since it will run different kinds of servers in comparison to the rest of the API.
+
+Each service will have a set of servers, and some round-robin load balancing could be implemented. This will be managed in the **path-based** load balancing layer.
+
+## Static API Content
+All the static content on AlgoExpert can be stored on a blob storage. Content such as the list of questions and their solutions can be requested through the API, but it's still static content.
+
+The solution of a blob storage is due to simplicity.
+
+## Caching
+Caching needs to be implemented to improve the user experience of the website, by reducing load times. To implement it, we can set up 2 layers of caching for the static API content:
+- **Client-Side Caching**: it will make users load questions once per session. Which will reduce the load times on the site and reduce the workload on the backend servers, since it will save 2-3 networks calls per session on average.
+- **In-Memory Caching**: This will happen on the servers. 
+  - We can estimate **100 questions, with 10 different languages and 5KB for each solution** to be 100 * 10 * 5000 bytes = **5MB of total data to keep in memory** on average.
+  - This is a perfectly fine size of data to keep in memory on a server.
+
+Since the static API content will suffer from changes every few days, we want those changes to be reflected on production as fast as possible. In order to achieve it, the data can be invalidated, evicted and replaced in the server-side cache every 30 minutes.
+
+## System Diagram
+![algoexpert-design](./design-algoexpert.png)
