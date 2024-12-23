@@ -53,11 +53,45 @@ The solution of a blob storage is due to simplicity.
 ## Caching
 Caching needs to be implemented to improve the user experience of the website, by reducing load times. To implement it, we can set up 2 layers of caching for the static API content:
 - **Client-Side Caching**: it will make users load questions once per session. Which will reduce the load times on the site and reduce the workload on the backend servers, since it will save 2-3 networks calls per session on average.
-- **In-Memory Caching**: This will happen on the servers. 
+- **In-Memory Caching**: This will happen on the servers.
   - We can estimate **100 questions, with 10 different languages and 5KB for each solution** to be 100 * 10 * 5000 bytes = **5MB of total data to keep in memory** on average.
   - This is a perfectly fine size of data to keep in memory on a server.
 
 Since the static API content will suffer from changes every few days, we want those changes to be reflected on production as fast as possible. In order to achieve it, the data can be invalidated, evicted and replaced in the server-side cache every 30 minutes.
+
+## Access Control
+In AlgoExpert, this regards to the **questions** content. Users who haven't purchased AlgoExpert won't have  access to individual questions.
+
+To implement this, an internal API can be called when a user makes a request for the static API content. In that way, the system can figure out if the user owns the product before returning the full list of questions.
+
+## User Data Storage
+As we want to store user's solutions and completion status, we will need SQL tables for that matter. An SQL table like Postgres or MySQL seems like a good choice since we will need to query this data a lot. We need 2 tables, **question_completion_status** and **user_solutions**.
+
+The **question_completion_status** will have the following schema:
+- id: integer, (Primary Key, Auto-Incremented)
+- user_id: string, (Can be obtained from auth)
+- question_id: string,
+- completion_status: enum('pending', 'attempted','solved')
+
+The table could have implemented **Uniqueness Constraint** on the user_id and question_id pair. As well as an index on **user_id** for fast querying.
+
+The **user_solutions** table will have the following schema:
+- id: integer, (Primary Key, Auto-Incremented)
+- user_id: string, (Can be obtained from auth)
+- question_id: string,
+- language: string, (The language of the solution)
+- solution: string (The user's solution itself)
+
+The table could implement **Uniqueness Constraint** on the user_id, question_id and language pair. As  well as an index on **question_id**. If lots of different languages that gets implemented, then an index on **language** as well is not a bad idea. Since that UI won't need to fetch all the user's solutions at the same time, which could cause problems on slow data connections.
+
+## Storage Performance
+
+
+## Inter-Region Replication
+
+
+## Code Execution
+
 
 ## System Diagram
 ![algoexpert-design](./design-algoexpert.png)
