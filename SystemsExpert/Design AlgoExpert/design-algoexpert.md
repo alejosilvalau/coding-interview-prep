@@ -85,12 +85,42 @@ The **user_solutions** table will have the following schema:
 The table could implement **Uniqueness Constraint** on the user_id, question_id and language pair. As  well as an index on **question_id**. If lots of different languages that gets implemented, then an index on **language** as well is not a bad idea. Since that UI won't need to fetch all the user's solutions at the same time, which could cause problems on slow data connections.
 
 ## Storage Performance
+The type of data that needs to be stored is:
+- Marking questions as complete
+- The code written on the coding workspace
 
+These two will issue request to the API to store the data on the database. In the case of the code written, it will have a 1 to 3 seconds of debounce time for performance.
+
+Thanks to the user numbers, which is 10000 users on average at any given point in time, the database won't need to handle more than 1000 writes per second. This is a number that SQL databases can handle.
+
+The system could have 2 major databases, each serving the 2 main regions:
+- North America
+- India (Which will serve Southeast Asia as well)
+
+We could possibly add another cluster serving Europe exclusively.
 
 ## Inter-Region Replication
+Since the system has 2 primary databases, they need to be in sync. As users on AlgoExpert are located either on US or India, the data written to one database doesn't needs to immediately be written on the other one.
 
+On the other hand, both servers needs to contain the same data at some point. Since users may travel around the world and hit a different database server.
+
+For this, we will have an **async replication** server between the databases. Every 12 hours, the replication will happen by default. But this time frame can vary depending on the amount of data that needs to be replicated.
 
 ## Code Execution
+It is a must to implement **rate limiting** on the code execution engine. We can do this by having some **tier-based** rate limiting using a K-V store like **Redis**.
+
+Rate limiting is a almost obligatory to prevent DoS Attacks, which is done by limiting the code-execution API. It will also give a good user experience when running code for normal users.
+
+The number of run per second can be limited to:
+1. Once every second
+2. 3 times per 5 seconds
+3. 5 times per minute.
+
+Which are the different tiers.
+
+Since we want only to have a 1-3 second of delay when running code, special servers (Which are called Workers) needs to be ready to run code at all times. To avoid killing the servers each time code is run, they can be cleaned up to remove generated files as a result of compilation.
+
+
 
 
 ## System Diagram
