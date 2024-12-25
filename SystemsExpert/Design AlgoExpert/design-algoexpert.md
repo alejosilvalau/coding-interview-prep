@@ -120,7 +120,26 @@ Which are the different tiers.
 
 Since we want only to have a 1-3 second of delay when running code, special servers (Which are called Workers) needs to be ready to run code at all times. To avoid killing the servers each time code is run, they can be cleaned up to remove generated files as a result of compilation.
 
+The backend servers would then contact the free workers and assign code to be run. To then, get a response back from the them when they finish running the code or if the code timed out. The backend servers would then proceed to return the response back to the UI in the same request.
 
+We can estimate that it takes 1 second for the code to compile (If it needs to) and run for each language. Let's say that users perform 10 to 100 **run-code operations** per second. Given that the platform is estimated to have 10000 users, then we need:
+```
+10000 Users / 100 Run-Code Operations = 100 Machines
+```
+
+Therefore, to satisfy the latency requirements of 1-3 seconds per run code, we would need between 10 - 100 machines. This needs to be scaled up if there is a higher load on the system.
+
+In that regard, the system scales horizontally with the number of users. The system can also scale vertically, having faster CPUs. Which would mean faster **run-code operations**.
+
+To make the system scale automatically, it will have logging and monitoring implemented. This is especially the case for the **run-code operations** for tracking run-code events in different ways:
+- Per Language
+- Per User
+- Per Question
+- Average Response Time
+
+Among others. When the demand goes up or down, the system then will automatically scale.
+
+An additional benefit that we have by implementing logging and monitoring is knowing when a malicious actor is engaging on malicious behavior on the code execution engine. For example, trying to shutdown the server by sending lots of requests in a short time-frame.
 
 
 ## System Diagram
