@@ -77,3 +77,41 @@ StreamDriverLocation(userId: string)
 Used to stream the location of the driver continously through a long-lived websocket connection. The driver is identified throuhg the **Ride** entity which is searched by the **userId**.
 
 ## Driver API
+The driver API relies on similar CRUD operations used for the passenger API on the Ride entity.
+```
+SetDriverStatus(userId: string, driverStatus: DriverStatus) => void
+```
+**DriverStatus**
+- enum (UNAVAILABLE, IN_RIDE, STANDBY)
+
+The endpoint is called whenever the driver wants a new ride, or it has finished all the rides that he/she wants to do on that day. When the driver status is set to **STANDBY**, the backend will call an internal **FindRide** method which will trigger an algorithm to enqueue the driver on a queue of drivers waiting for a new ride.
+
+The purpose of the algorithm is to find the best ride possible between the rider and the driver.
+
+Once the ride has been found, the ride gets locked to the rider for 30 seconds. This is a window of time in which the rider can accept or reject the ride. If the rider accepts the ride, the backend will internally call the **EditRide** method with the new driver's info as well as setting the driver status to **MATCHED**.
+
+```
+GetRide(userId: string) => Ride
+```
+It's called every 20-90 seconds alongside the trip to update the estimated price, time to destination, whether it's been canceled, etc.
+
+```
+EditRide(userId: string, [...params?: properties of the Ride objet that needs to be edited]) => Ride
+
+AcceptRide(userId: string) => void
+```
+The API will call EditRide(userId, MATCHED) and SetDriverStatus(userId, IN_RIDE) as stated previously.
+
+```
+CancelRide(userId: string) => void
+```
+This is a wrapper around the **EditRide** method which calls **EditRide(userId, CANCELLED)**
+
+```
+PushLocation(userId: string, location: GeoLocation) => void
+```
+This is continuously called on the driver's phone alongside the ride. It streams the driver's location to the passenger who has opened a web socket to know it's location. The **userId** belongs to the passenger, which is the one associated with the **Ride** entity.
+
+This is the counter part of the **StreamDriverLocation** on the Passenger API. It pushes the location data to that opened Web-Socket connection.
+
+## Uber Pool
