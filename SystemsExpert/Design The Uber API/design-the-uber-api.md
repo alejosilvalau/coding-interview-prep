@@ -10,13 +10,11 @@ The API Design will be based on the **core ride-hailing** service of Uber. This 
 The **core ride-hailing** service has a passenger-facing side and a driver-facing side. This design involves both.
 
 ## Coming Up With A Plan
-The API will be centered around a **Ride** entity. This entity will be associated to every Uber ride and will contain information about the ride.
-
-This includes information about the passenger and the driver.
+The API will be centered around a **Ride** entity. This entity will be associated to every Uber ride and will contain information about the ride. This includes information about the passenger and the driver.
 
 Because an Uber ride can only have one passenger and one driver, all the **permissioning related** to ride operations are going to be handled through the passenger and driver IDs.
 
-Operations like **GetRide** or **EditRide** will be based entirely on **userId**. Which will then return the appropiate ride tied to that passenger or driver.
+Operations like **GetRide** or **EditRide** will be based entirely on **userId**. Which will then return the appropriate ride tied to that passenger or driver.
 
 ## Entities
 **Ride**
@@ -42,9 +40,10 @@ It has a unique Id, information about the passenger and the driver, a status, an
 **VehicleInfo**
 - licensePlate: string
 - description: string
+- capacity: int
 
 **RideStatus**
-- enum (CREATED / MATCHED / STARTED / FINISHED / CANCELLED)
+- enum (CREATED, MATCHED, STARTED, FINISHED, CANCELLED)
 
 ## Passenger API
 The passenger API will consist of simple CRUD operations interacting with the Ride entity. It will also have an endpoint to stream the driver's location alongside a ride.
@@ -74,7 +73,7 @@ CancelRide(userId: string) => void
 ```
 StreamDriverLocation(userId: string)
 ```
-Used to stream the location of the driver continously through a long-lived websocket connection. The driver is identified throuhg the **Ride** entity which is searched by the **userId**.
+Used to stream the location of the driver continuously through a long-lived websocket connection. The driver is identified through the **Ride** entity which is searched by the **userId**.
 
 ## Driver API
 The driver API relies on similar CRUD operations used for the passenger API on the Ride entity.
@@ -82,7 +81,7 @@ The driver API relies on similar CRUD operations used for the passenger API on t
 SetDriverStatus(userId: string, driverStatus: DriverStatus) => void
 ```
 **DriverStatus**
-- enum (UNAVAILABLE, IN_RIDE, STANDBY)
+- enum (UNAVAILABLE, IN_RIDE, IN_RIDE_DONE, STANDBY)
 
 The endpoint is called whenever the driver wants a new ride, or it has finished all the rides that he/she wants to do on that day. When the driver status is set to **STANDBY**, the backend will call an internal **FindRide** method which will trigger an algorithm to enqueue the driver on a queue of drivers waiting for a new ride.
 
@@ -115,3 +114,20 @@ This is continuously called on the driver's phone alongside the ride. It streams
 This is the counter part of the **StreamDriverLocation** on the Passenger API. It pushes the location data to that opened Web-Socket connection.
 
 ## Uber Pool
+Uber Pool rides allow for multiple passengers on different Uber accounts to share an Uber ride for a cheaper price.
+
+To handle this functionality, we will have another entity called **PoolRide** which would have a list of **Rides** attached to it. Each passenger would call the **CreateRide** endpoint when they need a ride. Therefore, each one will have their own **¨Ride** entity. 
+
+These different **Ride** entities of all the passengers will be attached to the **PoolRide** entity with additional information about the pool ride.
+
+The entity will also have a **DriverStatus** to allow drivers to limit the amount of passenger, by marking themselves as accepting new passengers or already full.
+
+When a passenger finishes the ride, the **SetDriverStatus** is called and it's status is marked as **IN_RIDE_DONE**. Which means that the driver has already finished one ride, but there are more rides to complete.
+
+The rest of the functionality remains the same.
+
+This is the resulting schema:
+
+**PoolRide**
+- driverInfo: DriverStatus
+- rides: Ride[]
