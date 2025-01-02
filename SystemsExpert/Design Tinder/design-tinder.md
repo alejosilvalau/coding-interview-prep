@@ -17,7 +17,7 @@ The 4 main sections that the design will focus on are:
 - Storage Overview
 - Profile Creation
   - Picture
-  - Bio 
+  - Bio
   - Name
   - Etc.
 - Deck Generation
@@ -43,3 +43,20 @@ The **matching** and the **open line of communication** will not be covered on t
 There are no caps on the potential matches, Super-likes, swipes for simplicity.
 
 ## Storage Overview
+Except for the profile images, the data that we store like:
+- Profile info
+- Decks
+- Swipes
+- Matches
+
+should be structured. The system will use a SQL database for that matter, which will be divided into several SQL tables.
+
+There will be multiple regional databases to store all the data, which will be located in different hot spots such as India or East Coast U.S. Users who fetch the app, will be routed to the regional database which is closer to it's location by API servers. These API servers will redirect the traffic by a round-robin approach.
+
+The profile images will be stored in a global blob store, and will be served through a CDN.
+
+The system will have asynchronous replication implemented for the regional databases. But it would replicate every few minutes to hours. This is acceptable on this design, because users tend to be closer to each other in regards to geo location.
+
+
+## System Diagram
+![tinder-design](./design-tinder.png)
