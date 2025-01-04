@@ -57,6 +57,61 @@ The profile images will be stored in a global blob store, and will be served thr
 
 The system will have asynchronous replication implemented for the regional databases. But it would replicate every few minutes to hours. This is acceptable on this design, because users tend to be closer to each other in regards to geo location.
 
+## Profile Creation
+The user profiles will be stored in the **profiles** SQL table. The schema is the following:
+- userId: string
+- geolocation: point
+- name: string
+- age: int
+- gender: enum
+- sexualPreference: enum
+- job: string
+- bio: string
+- pictures: string[]
+
+The **pictures** column will store the addresses of the pictures which are stored in a separated blob store.
+
+The **userId** is a field that gets automatically assigned to the user the profile gets created or updated. The **geolocation** field can be updated when the user opens the app. It will update the value of the field if the user is on a different location than it's previous stored location.
+
+All this data takes around ~2KB per profile as an upper bound. We have estimated that tinder has 50 million users world wide. Therefore, the system will need 2KB * 50.000.000 == 100GB of storage per region. As we estiate to have 10-50 regional databases, the system will need 100GB * 10-50 == 1-5TB in total.
+
+1-5TB is a very logical and manageable space for an app of this scale.
+
+In regards to pictures, users will have an average of 5 pictures. This makes up for an upper bound of ~2MB per picture assuming that they are in 1920x1080p. Since users are going to see those pictures on a mobile device, we can reduce the dimensions of the pictures. To achieve this, we can implement lossy compression on each of the pictures.
+
+By implementing lossy compression, the size of the pictures will be reduced to ~50KB on average. This is due to ~200-500KB after dimension reduction and ~50KB after lossy compression for each picture.
+
+```
+~50KB * 5 = 250KB for the pictures for each user
+~250KB * 50.000.000 users == 12.5TB
+```
+
+12.5TB will be the total storage needed for the global blob store.
+
+## Deck Generation
+To generate the decks, the **smart deck-generation algorithm** will continuously generate 200 decks for each user every day. This is necessary to ensure the user's decks are as relevant as possible when they use the app. This will also minimize the possibility of the user getting irrelevant profiles in it's deck in case the user is travelling to another location.
+
+The **deck-generation algorithm** to avoid re-generating decks for users who didn't use the app for more than a day. And can also be called to re-generate decks of people who have changed location, even in the same day. This is triggered when the user opens the app and the location stored in the **profiles** table row is different from what his/her device is registering. 
+
+The decks for each user will be stored on an individual SQL table called **decks**. It will follow this schema:
+- userId: string
+- potentialMatches: string[]
+
+The **potentialMathes** array will work as a queue. When the app loads, it will request the top 40 profiles from the **decks** table by the **userId** and store those profiles locally on the user's device. Then it will remove those users from the **decks** table. 
+
+If the user shuts down the phone completely or closes the app, the profiles which were locally stored on the user's phone will be re-added to the deck at a later time by the deck-generation algorithm.
+
+The app will make sure that the number of relevant profiles cached on the device is never less than 20. This is done to achieve the feeling of an infinite amount of swipes from the user's perspective. To accomplish this, the app will continuously fetch 20 additional profiles at the top of the user's deck when there are 20 profiles locally stored which has not been swiped yet.
+
+When the user runs of potential matches, which means the deck has gone from 200 to 0, the request for 20 new potential matches will trigger the deck-generation algorithm to create a new deck. This will cause some potential loading time in the middle of using the app, but this is the only time in the entire UX that happens. 
+
+As well as, the user would need to swipe for more than 200 potential matches during a single day extremely fast to get to it's final 20 before the app generates a new deck.
+
+## Swiping
+
+## Super-Liking
+
+## Undoing
 
 ## System Diagram
 ![tinder-design](./design-tinder.png)
