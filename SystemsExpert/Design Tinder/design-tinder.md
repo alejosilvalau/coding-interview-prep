@@ -108,10 +108,34 @@ When the user runs of potential matches, which means the deck has gone from 200 
 As well as, the user would need to swipe for more than 200 potential matches during a single day extremely fast to get to it's final 20 before the app generates a new deck.
 
 ## Swiping
+To store swipes, the system needs two more SQL tables. The first one is **swipes**:
+- swiperId: string
+- swipeeId: string (index)
+- swipeType: enum(LIKE, PASS)
+- timestamp: datetime (index)
+
+The indexes are fpr allowing fast lookups on the user's most relevant swipes. These are the most recent swipes that has been performed on the user.
+
+The other required SQL table is **matches**:
+- userOneId: string
+- userTwoId: string
+- timestamp: datetime
+
+The **matches** table goes beyod the scope of the question, therefore it won't be covered in this design.
+
+When the tinder app loads, the app fetches the rows on the **swipes** table that matches with the current **userId**. After that, every 30 seconds, it will fetch the same rows with a **timestamp** later than the previously-fetched most recent timestamp.
+
+To reduce latencies, the app will store all the swipes in memory on a hashtable-like structure. This way for potential matches, the app can know immediately if the the user has already swiped on someone's elses profile. As the data is not big (~20 bytes per data on swipe row * 100K swipes maximum = 2MB).
+
+The app will write the swipes on the **swipes** table when a user swipes. If the **swipeType** is LIKE, the backend checks for the swipes table and it will write the match on the **matches** table.
+
+On the UI, the app will immediately know if there is a match. Therefore, the app will display the notification to the involved users.
 
 ## Super-Liking
 
+
 ## Undoing
+
 
 ## System Diagram
 ![tinder-design](./design-tinder.png)
