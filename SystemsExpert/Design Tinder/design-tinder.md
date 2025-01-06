@@ -28,7 +28,7 @@ The 4 main sections that the design will focus on are:
   - If two users swipe right on each other, they can match
   - Once matched, the two users can chat and have an open line of communication.
 - Super-Liking
-  - Special type of swipe, in which you put yourself at the top of the person's deck who is swipping your profile.
+  - Special type of swipe, in which you put yourself at the top of the person's deck who is swiping your profile.
   - If you are user 1 and Super-like user 2, user 2 will see user 1 at the top of his deck.
   - Plus there is a visual indicator that user 1 has **Super-Liked** user 2.
 - Undoing
@@ -73,7 +73,7 @@ The **pictures** column will store the addresses of the pictures which are store
 
 The **userId** is a field that gets automatically assigned to the user the profile gets created or updated. The **geolocation** field can be updated when the user opens the app. It will update the value of the field if the user is on a different location than it's previous stored location.
 
-All this data takes around ~2KB per profile as an upper bound. We have estimated that tinder has 50 million users world wide. Therefore, the system will need 2KB * 50.000.000 == 100GB of storage per region. As we estiate to have 10-50 regional databases, the system will need 100GB * 10-50 == 1-5TB in total.
+All this data takes around ~2KB per profile as an upper bound. We have estimated that tinder has 50 million users world wide. Therefore, the system will need 2KB * 50.000.000 == 100GB of storage per region. As we estimate to have 10-50 regional databases, the system will need 100GB * 10-50 == 1-5TB in total.
 
 1-5TB is a very logical and manageable space for an app of this scale.
 
@@ -114,28 +114,38 @@ To store swipes, the system needs two more SQL tables. The first one is **swipes
 - swipeType: enum(LIKE, PASS)
 - timestamp: datetime (index)
 
-The indexes are fpr allowing fast lookups on the user's most relevant swipes. These are the most recent swipes that has been performed on the user.
+The indexes are for allowing fast lookups on the user's most relevant swipes. These are the most recent swipes that has been performed on the user.
 
 The other required SQL table is **matches**:
 - userOneId: string
 - userTwoId: string
 - timestamp: datetime
 
-The **matches** table goes beyod the scope of the question, therefore it won't be covered in this design.
+The **matches** table goes beyond the scope of the question, therefore it won't be covered in this design.
 
 When the tinder app loads, the app fetches the rows on the **swipes** table that matches with the current **userId**. After that, every 30 seconds, it will fetch the same rows with a **timestamp** later than the previously-fetched most recent timestamp.
 
-To reduce latencies, the app will store all the swipes in memory on a hashtable-like structure. This way for potential matches, the app can know immediately if the the user has already swiped on someone's elses profile. As the data is not big (~20 bytes per data on swipe row * 100K swipes maximum = 2MB).
+To reduce latencies, the app will store all the swipes in memory on a hashtable-like structure. This way for potential matches, the app can know immediately if the the user has already swiped on someone's else's profile. As the data is not big (~20 bytes per data on swipe row * 100K swipes maximum = 2MB).
 
 The app will write the swipes on the **swipes** table when a user swipes. If the **swipeType** is LIKE, the backend checks for the swipes table and it will write the match on the **matches** table.
 
 On the UI, the app will immediately know if there is a match. Therefore, the app will display the notification to the involved users.
 
 ## Super-Liking
+The current design can be tweaked to implement the **Super Like** feature by doing the following:
+- The value **SUPER_LIKE** gets added to the **swipeTypes** on the **swipes** table
+- If user #1 super likes user #2, then the backend will store the swipe as **SUPER_LIKE**. If there is a match, then it gets written to the **matches** table. Otherwise, the backend will put user #1 on top of user's #2 deck, below other older super-likes. If user #1 was already on the user's #2 deck, then it gets deleted from the old position.
 
+Super-Likes will always be at the top of the deck. The older ones will appear first, because they will be ordered by timestamp.
+
+On the UI, when user #1 has super liked the profile of user #2, then user #2 will see a visual indicator of that.
+
+If user #1 is already on the deck of user #2, and user #1 has super liked user  #2, then it will appear on the UI on the next fetch.
 
 ## Undoing
+Undoing can be implemented by adding a delay between when the user has swiped a profile and when the left swipe gets stored on the database. After a left swipe, this will get stored on the database on the following swipe on when the app gets closed.
 
+In this way, we avoid needed to undo rows on the swipes table. As we would need to do a single API instead of multiple.
 
 ## System Diagram
 ![tinder-design](./design-tinder.png)
