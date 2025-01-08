@@ -78,7 +78,7 @@ To avoid querying channels that didn't change again, while implementing the feat
 
 The last table that we need is for supporting the unread user mentions functionality. This is a number that will be displayed next to the channel name, to see how many mentions of the particular user, did happen on a given channel. 
 
-This is the **schema** for the **unread-mentions** table:
+This is the **schema** for the **unread_mentions** table:
 - id: uuid
 - orgId: uuid
 - channelId: uuid
