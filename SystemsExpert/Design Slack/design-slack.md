@@ -29,7 +29,7 @@ Part of the system involves retrieving data, which takes the form of channels, m
 
 SQL tables are the best solution in this case, since the data will be structured and queried frequently.
 
-The **schema** for every slack **channel** will be the following:
+The **schema** for every slack channel(**channels** table) will be the following:
 - id: uuid (channelId)
 - orgId: uuid
 - name: string
@@ -76,7 +76,7 @@ To avoid querying channels that didn't change again, while implementing the feat
       - userId: uuid
       - lastSeen: timestamp
 
-The last table that we need is for supporting the unread user mentions functionality. This is a number that will be displayed next to the channel name, to see how many mentions of the particular user, did happen on a given channel. 
+The last table that we need is for supporting the unread user mentions functionality. This is a number that will be displayed next to the channel name, to see how many mentions of the particular user, did happen on a given channel.
 
 This is the **schema** for the **unread_mentions** table:
 - id: uuid
@@ -88,7 +88,11 @@ This is the **schema** for the **unread_mentions** table:
 This **count** column will get incremented when a user tags another users on a specific channel. And it will be reseted to zero when a user opens a channel that has unread mentions of themself.
 
 ## Load Balancing
+Load balancing is essential for all the API calls that clients do when the app load and when they do writes to the databases. For example, when sending a message or marking a channel as read
 
+As we don't care which API call goes to which server, the system will have a round-robin load balancer.
+
+Upon receiving the API call, the load balancers will then forward the request to a cluster of API servers that will forward the request to the database.
 
 ## Smart Sharding
 
@@ -97,3 +101,4 @@ This **count** column will get incremented when a user tags another users on a s
 
 
 ## System Diagram
+![slack-design](./design-slack.png)
