@@ -95,10 +95,46 @@ As we don't care which API call goes to which server, the system will have a rou
 Upon receiving the API call, the load balancers will then forward the request to a cluster of API servers that will forward the request to the database.
 
 ## Smart Sharding
+Since the **historical_messages** table is super large, sharding is necessary.
 
+An smart approach would be organizing it by **organization size**. This means that the organizations with the biggest channels will have their own shards. Meanwhile, smaller organizations would share shards together for their respective channels.
+
+There is a problem, as organization size and app activity changes, some specific situations can generate hot spots and bad latencies. such as:
+- Double the size of the organization in a single year
+- Seemingly random activity
+
+To handle this, the system will implement **smart sharding**. This subsystem will measure the organization's activity and size asynchronously and re-distribute the shards allocated to it.
+
+The subsystem will take the form of a key-value store using Etcd or ZooKeeper, and will map **orgId to shards**. The API servers will communicate with it to know where to route the incoming request.
 
 ## Pub/Sub System
+The two main features to support are:
+- Sending and receiving messages in real time
+- Cross-device synchronization
 
+To implement both, we can rely on a Pub/Sub messaging system. Each slack organization or group of them will have a **Kafka topic** assigned to them. When a user sends a message or mark it as read, the API servers will update the appropriate databases and send a Pub/Sub message to it's Kafka topic.
+
+The JSON schema for the Pub/Sub messages looks like this:
+```
+{
+  "type": "chat",
+  "orgId": "AAA",
+  "channelId": "BBB",
+  "userId": "CCC",
+  "messageId": "DDD",
+  "timestamp": "2025-01-10T06:52:03",
+  "body": "body of the message",
+  "mentions": ["CCC", "EEE"]
+},
+{
+  "type": "read-receipt",
+  "orgId": "AAA",
+  "channelId": "BBB",
+  "userId": "CCC",
+  "messageId": "DDD",
+  "timestamp": "2025-01-10T06:52:03",
+}
+```
 
 ## System Diagram
 ![slack-design](./design-slack.png)
