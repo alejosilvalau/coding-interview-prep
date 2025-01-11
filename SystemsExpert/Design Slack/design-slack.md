@@ -136,5 +136,13 @@ The JSON schema for the Pub/Sub messages looks like this:
 }
 ```
 
+A different set of API servers will subscribe to multiple Kafka topics. This is generally structure for each API server cluster to subscribe to one single topic. Then the clients will establish a long-lived TCP connection with the API server clusters to receive the messages with minimal latency.
+
+We need also a load balancer that uses the **smart sharding** algorithm to match the client with the correct API server cluster. 
+
+When the user receives a message, it will perform different actions based on user interaction. Like marking the channel as unread or updating the user mentions. 
+
+Since the Pub/Sub messages have a timestamp, and writing and reading messages from Slack channels involves writing to the persistent storage, the Pub/Sub messages are **idempotent operations**.
+
 ## System Diagram
 ![slack-design](./design-slack.png)
