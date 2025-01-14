@@ -33,3 +33,44 @@ And the renter can be divided even further into:
 - Reserving a listing
 
 ## Listings Storage & Quadtree
+The system will store all the listings on a SQL table, which will be the primary source of truth when a host creates or deletes a listing. 
+
+Because latency is a concern when searching for listings, and it requires querying the database based on location, each region will have it's listings divided on a quadtree. This way, users can traverse it on it's entirety without limiting the searching scope if they were to search for a broader location.
+
+The quadtree will be stored in memory on an auxiliary machine to reduce latency. This auxiliary machine will be called **the geo index**. It will store the information needed to display the listing on the UI:
+- Title
+- Description
+- Link to the listing image
+- Unique listing ID
+- Etc.
+
+Taking into account that as an upper bound, a single listing would take around 10KB in memory, then:
+```
+~10KB for each listing
+~1 Million listings
+~10KB * 1.000.000 = 10GB
+```
+
+And 10GB can be stored in memory.
+
+To make sure that the quadtree never goes down due to machine failure, the system will have a cluster of machines each holding a copy of the quadtree. The cluster will then use the **leader election** strategy as a safety layer from machine failures.
+
+The system will create the quadtree on boot up on the **geo-index machines** by querying the SQL table. When there is a new listing, or an old one gets deleted, the system will first write to the database table, and synchronously update the geo-index leader quadtree. Then, every 10 minutes, the leader and the followers of the geo-index machines will recreate the quadtree directly from the SQL table to stay up to date.
+
+On this way, if one of the followers takes place when the leader dies, the information would be stale for at most 10 minutes. After which, the new quadtree is being generated.
+
+## Searching For Listings
+Renters will call to the **ListListing API** endpoint. The endpoint will then browse through the leader quadtree to find listings relevant to the renters specified location.
+
+The quadtree will have a depth of approximately 10, since 4^10 > 1.000.000. This means that finding locations would be fast.
+
+It's important to note that the system should not return listings which are unavailable during the date range established by the renter. For this, each listing will have a list of **unavailable date ranges** in which a binary search should determine if the listing is or not available for the renter to search for.
+
+As the UI will be paginated, the system will limit the amount of relevant listings returned from the quadtree with an offset. If the page were to have a size of 50 listings, then the first offset is 0, the second is 50, third 100 and so on.
+
+## Getting Individual Listings
+This will be a simple API endpoint which will take the unique ID of the listing selected by the renter from the list of listings. Then the app will query the SQL table for the given ID of the listing.
+
+As the listings are indexed by ID, this should not carry noticeable latency.
+
+## Reserving Listings
