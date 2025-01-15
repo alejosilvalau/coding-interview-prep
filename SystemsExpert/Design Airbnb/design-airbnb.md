@@ -74,3 +74,47 @@ This will be a simple API endpoint which will take the unique ID of the listing 
 As the listings are indexed by ID, this should not carry noticeable latency.
 
 ## Reserving Listings
+When reserving listings, we need the reserved listing to be reflected on the quadtree and the persistent storage solution. 
+
+A second SQL table called **reservations** will hold the listings IDs, date ranges and timestamps for each of the reservations. 
+
+When a renter wants to book a listing, the **reservations** table will be queried to see if the listing for the specified range is still available. Otherwise, it will just return an error. If there is not a reservation made, then the system will give the host 15 minutes to finish the reservation and complete the payment.
+
+To make sure that the quadtree is also up-to-date, when writing to the **reservations** table, the geo-index of the leader quadtree will also be updated. The reservation will have an **unavailabilities** list, in which each item has a date range and an expiration date.
+
+The final JSON for the listing on the quadtree will looks like this:
+```
+{
+  "unavailabilities": [
+    {
+      "range": ["2024-12-12T12:00:00-05:00", "2024-12-21T12:00:00-05:00"],
+      "expiration": "2024-12-18T12:00:00-05:00"
+    },
+    {
+      "range": ["2025-01-01T12:00:00-05:00", "2025-01-21T12:00:00-05:00"],
+      "expiration": "2025-01-12T12:00:00-05:00"
+    },
+    {
+      "range": ["2025-03-05T12:00:00-05:00", "2025-04-05T12:00:00-05:00"],
+      "expiration": null
+    },
+  ],
+  "title": "Listing Title",
+  "description": "Listing Description",
+  "thumbnailUrl": "Listing Thumbnail URL"
+  "id": "Listing ID"
+}
+```
+## Load Balancing
+A simple round-robin approach will be enough to load-balance API requests from the host side. This includes creating and deleting listings. Then the API servers will write to the SQL table and communicate with the geo-index leader.
+
+On the other side, from the renters side, the load balance will be used to list, get and reserve listings on a cluster of API servers. The strategy that will be used is called **API-path-based**, in which it the load balancer will route the API call depending on the endpoint that is trying to access.
+
+In this way, the different API servers from the cluster can perform an specific task instead of trying to perform every different API call, decreasing latency. If other strategy were to be used, as the API workloads are very different from one another, it would increase latency.
+
+Caching won't be done on the API servers, because it will cause the system problems regarding stale data such as:
+- Reservations
+- Bookings
+- New Listings Appearing
+
+## System Diagram
