@@ -1,0 +1,31 @@
+/*  Write your code here. */
+
+/* Delete this ruleset. */
+#outer {
+  border: 25px solid #ff0000;
+  height: 250px;
+  width: 250px;
+  background-color: #ffa500;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+#middle {
+  border: 25px solid #ffff00;
+  height: 150px;
+  width: 150px;
+  background-color: #008000;
+  border-radius: 50%;
+  display: inline-block;
+  margin: 25px;
+}
+
+#inner {
+  border: 25px solid #0000ff;
+  height: 50px;
+  width: 50px;
+  background-color: #800080;
+  border-radius: 50%;
+  display: inline-block;
+  margin: 25px;
+}
