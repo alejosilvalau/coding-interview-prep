@@ -1,3 +1,6 @@
+// O(n) time | O(n) space
+// n = length of the input string
+
 export function reverseWordsInString(string: string) {
   const characters: string[] = [];
   for (const char of string) {
