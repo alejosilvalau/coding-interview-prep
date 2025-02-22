@@ -1,3 +1,7 @@
+// O(n^2) Time | O(d) Space
+// n = number of nodes in the tree
+// d = depth of the BST tree that the arrays represent
+
 export function sameBsts(arrayOne: number[], arrayTwo: number[]) {
   return areSameBsts(arrayOne, arrayTwo, 0, 0, -Infinity, Infinity);
 }
