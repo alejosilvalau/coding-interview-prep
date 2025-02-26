@@ -13,6 +13,7 @@ export class BST {
 // O(n) time | O(h) space
 // n == number of nodes
 // h == height of the tree
+// in-order traversal with recursion
 export function repairBst(tree: BST) {
   let nodeOne: BST | null = null;
   let nodeTwo: BST | null = null;
