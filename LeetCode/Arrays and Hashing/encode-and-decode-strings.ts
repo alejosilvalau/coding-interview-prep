@@ -1,15 +1,18 @@
-// O(m) time | O(m + n) space
-// m = total length of all strings in the array
-// n = number of strings in the array
 class Solution {
+  // O(m) time | O(m) space
+  // m = total summed length of all strings in the array
+  // n = number of strings in the array
   encode(strs: string[]) {
-    let res: string = '';
+    let res: string[] = [];
     for (let s of strs) {
-      res += s.length + '#' + s;
+      res.push(s.length + '#' + s);
     }
-    return res;
+    return res.join('');
   }
 
+  // O(m) time | O(m + n) space
+  // m = total summed length of all strings in the array
+  // n = number of strings in the array
   decode(str: string) {
     let res: string[] = [];
     let i = 0;
