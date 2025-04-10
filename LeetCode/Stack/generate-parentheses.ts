@@ -6,7 +6,7 @@
 //
 // In regards to space complexity, the situation is similar. Therefore
 // are a max recursion depth of 2n, which takes O(n) space on the call
-// stack. Then the algorithm stores Cn of legnth 2n. This results on
+// stack. Then the algorithm stores Cn of length 2n. This results on
 // a space complexity O(Cn * n) = O(4^n/√n).
 function generateParenthesis(n: number): string[] {
   const ans: string[] = [];
