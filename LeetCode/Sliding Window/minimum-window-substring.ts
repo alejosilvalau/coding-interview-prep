@@ -42,7 +42,7 @@ function minWindow(s: string, t: string): string {
       // until while condition is not met anymore
       windowFreqMap[s[left]]--;
       if (countTFreqMap[s[left]] && windowFreqMap[s[left]] < countTFreqMap[s[left]]) {
-        // If the caracter reduced was on the string s, then reduce have count
+        // If the character reduced was on the string s, then reduce have count
         have--;
       }
       left++;
