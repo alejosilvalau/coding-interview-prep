@@ -36,7 +36,7 @@ function mergeKLists(lists: Array<ListNode | null>): ListNode | null {
 }
 
 function mergeLists(list1: ListNode | null, list2: ListNode | null) {
-  // Create dummyNode to avoud null exceptions
+  // Create dummyNode to avoid null exceptions
   const dummyNode = new ListNode(0);
   let currentNode = dummyNode;
 
