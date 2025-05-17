@@ -20,12 +20,12 @@ function lowestCommonAncestor(root: TreeNode | null, p: TreeNode | null, q: Tree
 
   while (currentNode) {
     // Check if the two nodes values are higher than the currentNode value
-    if (p.val > currentNode.val && q.val > currentNode.val) currentNode = currentNode.right;
+    if (p!.val > currentNode.val && q!.val > currentNode.val) currentNode = currentNode.right;
     // Check if the two nodes values are lower than the currentNode value
-    else if (p.val < currentNode.val && q.val < currentNode.val) currentNode = currentNode.left;
+    else if (p!.val < currentNode.val && q!.val < currentNode.val) currentNode = currentNode.left;
     // Otherwise, you found the lowest common ancestor
     else return currentNode;
   }
 
   return null;
-};
+}
