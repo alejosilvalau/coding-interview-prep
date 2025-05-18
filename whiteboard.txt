@@ -12,20 +12,25 @@
  * }
  */
 
-// O(h) time | O(1) space
-// h === height of the BST
-function lowestCommonAncestor(root: TreeNode | null, p: TreeNode | null, q: TreeNode | null): TreeNode | null {
-  // Make a reference to the head of the BST
-  let currentNode: TreeNode | null = root;
+function levelOrder(root: TreeNode | null): number[][] {
+  let result = p[];
+  let (!root) return result;
 
-  while (currentNode) {
-    // Check if the two nodes values are higher than the currentNode value
-    if (p.val > currentNode.val && q.val > currentNode.val) currentNode = currentNode.right;
-    // Check if the two nodes values are lower than the currentNode value
-    else if (p.val < currentNode.val && q.val < currentNode.val) currentNode = currentNode.left;
-    // Otherwise, you found the lowest common ancestor
-    else return currentNode;
+  const queue = new Queue();
+  queue.push(root);
+
+  while (!queue.isEmpty()) {
+    let currentLevel = [];
+
+    for (let idx = queue.size(); i > 0; i--) {
+      let currentNode = queue.pop();
+      if (currentNode) {
+        currentLevel.push(currentNode.val);
+        queue.push(currentNode.left);
+        queue.push(currentNode.right);
+      }
+    }
+    if (currentLevel.length > 0) result.push(currentLevel);
   }
-
-  return null;
+  return result;
 };
