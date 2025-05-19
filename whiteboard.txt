@@ -1,36 +1,35 @@
 /**
  * Definition for a binary tree node.
  * class TreeNode {
- *     val: number
- *     left: TreeNode | null
- *     right: TreeNode | null
- *     constructor(val?: number, left?: TreeNode | null, right?: TreeNode | null) {
- *         this.val = (val===undefined ? 0 : val)
- *         this.left = (left===undefined ? null : left)
- *         this.right = (right===undefined ? null : right)
+ *     constructor(val = 0, left = null, right = null) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
  *     }
  * }
  */
 
-function levelOrder(root: TreeNode | null): number[][] {
-  let result = p[];
-  let (!root) return result;
+function rightSideView(root: TreeNode | null): number[] {
+  const response: (TreeNode | null)[] = [];
+  const queue: (TreeNode | null)[] = [];
 
-  const queue = new Queue();
   queue.push(root);
 
-  while (!queue.isEmpty()) {
-    let currentLevel = [];
+  while (queue) {
+      let rightSideNode = null;
+      const currentQueueLength = q.size();
 
-    for (let idx = queue.size(); i > 0; i--) {
-      let currentNode = queue.pop();
-      if (currentNode) {
-        currentLevel.push(currentNode.val);
-        queue.push(currentNode.left);
-        queue.push(currentNode.right);
+      for (let idx = 0; idx < currentQueueLength; idx++) {
+          const currentNode = queue.pop();
+          if (currentNode) {
+              rightSideNode = currentNode;
+              queue.push(currentNode.left);
+              queue.push(currentNode.right);
+          }
       }
-    }
-    if (currentLevel.length > 0) result.push(currentLevel);
+      if (rightSideNode) {
+          response.push(rightSideNode.val);
+      }
   }
-  return result;
-};
+  return response;
+}
