@@ -21,13 +21,15 @@
 // n === number of nodes in the tree
 // h === height of the tree
 function goodNodes(root: TreeNode | null): number {
-  return depthFirstSearch(root, root.val);
-};
+  return depthFirstSearch(root, root!.val);
+}
 
-function depthFirstSearch(currentNode: TreeNode | null, currentMaxVal: number) {
+function depthFirstSearch(currentNode: TreeNode | null, currentMaxVal: number): number {
   if (!currentNode) return 0;
 
   const result = currentNode.val >= currentMaxVal ? 1 : 0;
   currentMaxVal = Math.max(currentMaxVal, currentNode.val);
-  return result + depthFirstSearch(currentNode.left, currentMaxVal) + depthFirstSearch(currentNode.right, currentMaxVal);
+  return (
+    result + depthFirstSearch(currentNode.left, currentMaxVal) + depthFirstSearch(currentNode.right, currentMaxVal)
+  );
 }

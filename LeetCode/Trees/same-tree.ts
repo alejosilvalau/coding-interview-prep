@@ -16,7 +16,7 @@
 // Space Complexity:
 //   Best Case (balanced tree): O(log(n))
 //   Average Case: O(n)
-//   Worst Case (Skewed tree): (n)
+//   Worst Case (Skewed tree): O(n)
 //
 // n === number of nodes in the smallest tree
 function isSameTree(p: TreeNode | null, q: TreeNode | null): boolean {
