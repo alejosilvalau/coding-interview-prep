@@ -14,13 +14,13 @@
 // O(n) time | O(n) space
 // n === number of nodes on the tree
 function isValidBST(root: TreeNode | null): boolean {
-    return validateBSTSubtree(root, -Infinity, Infinity);
-};
+  return validateBSTSubtree(root, -Infinity, Infinity);
+}
 
 function validateBSTSubtree(node: TreeNode | null, minNodeVal: number, maxNodeVal: number): boolean {
-    if (!node) return true;
+  if (!node) return true;
 
-    if (!(minNodeVal < node.val && node.val < maxNodeVal)) return false;
+  if (!(minNodeVal < node.val && node.val < maxNodeVal)) return false;
 
-    return validateBSTSubtree(node.left, minNodeVal, node.val) && validateBSTSubtree(node.right, node.val, maxNodeVal);
+  return validateBSTSubtree(node.left, minNodeVal, node.val) && validateBSTSubtree(node.right, node.val, maxNodeVal);
 }
