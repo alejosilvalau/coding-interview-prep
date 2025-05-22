@@ -15,20 +15,20 @@
 // n === number of nodes on the tree
 //
 // This is an iterative DFS, there is a much shorter approach with recursion.
-function kthSmallest(root: TreeNode | null, k: number): number {
+function kthSmallest(root: TreeNode | null, k: number): number | undefined {
   let stack: (TreeNode | null)[] = [];
   let currentNode: TreeNode | null = root;
 
   while (stack.length > 0 || currentNode !== null) {
-      while (currentNode !== null) {
-          stack.push(currentNode);
-          currentNode = currentNode.left;
-      }
-      currentNode = stack.pop();
-      k--;
-      if (k === 0) {
-          return currentNode.val;
-      }
-      currentNode = currentNode.right;
+    while (currentNode !== null) {
+      stack.push(currentNode);
+      currentNode = currentNode.left;
+    }
+    currentNode = stack.pop()!;
+    k--;
+    if (k === 0) {
+      return currentNode.val;
+    }
+    currentNode = currentNode.right;
   }
-};
+}
