@@ -12,14 +12,14 @@
  * }
  */
 
-/*
- * Encodes a tree to a single string.
- */
+// O(n) time | O(n) space
+// n === number of nodes in the tree
+//Encodes a tree to a single string using pre-order traversal.
 function serialize(root: TreeNode | null): string {
   const result: string[] = [];
   dfsSerialize(root, result);
   return result.join(',');
-};
+}
 
 function dfsSerialize(node: TreeNode | null, result: string[]) {
   if (node === null) {
@@ -32,16 +32,19 @@ function dfsSerialize(node: TreeNode | null, result: string[]) {
   dfsSerialize(node.right, result);
 }
 
-/*
- * Decodes your encoded data to tree.
- */
+// O(n) time | O(n) space
+// n === number of nodes in the tree
+//Decodes your encoded data to tree.
 function deserialize(data: string): TreeNode | null {
   const treeValues: string[] = data.split(',');
-  const idx = {val: 0};
-  dfsDeserialize(treeValues, idx);
-};
 
-function dfsDeserialize(treeValues: string[], idx: {val: number}): TreeNode | null  {
+  // Create an index object to keep track of the current position in the array
+  // This is necessary because we need to pass the index by reference
+  const idx = { val: 0 };
+  return dfsDeserialize(treeValues, idx);
+}
+
+function dfsDeserialize(treeValues: string[], idx: { val: number }): TreeNode | null {
   if (treeValues[idx.val] === 'null') {
     idx.val++;
     return null;
@@ -53,7 +56,6 @@ function dfsDeserialize(treeValues: string[], idx: {val: number}): TreeNode | nu
   newNode.right = dfsDeserialize(treeValues, idx);
   return newNode;
 }
-
 
 /**
  * Your functions will be called as such:
