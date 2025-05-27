@@ -1,61 +1,67 @@
-/**
- * Definition for a binary tree node.
- * class TreeNode {
- *     val: number
- *     left: TreeNode | null
- *     right: TreeNode | null
- *     constructor(val?: number, left?: TreeNode | null, right?: TreeNode | null) {
- *         this.val = (val===undefined ? 0 : val)
- *         this.left = (left===undefined ? null : left)
- *         this.right = (right===undefined ? null : right)
- *     }
- * }
- */
 
-/*
- * Encodes a tree to a single string.
- */
-function serialize(root: TreeNode | null): string {
-  const result: string[] = [];
-  dfsSerialize(root, result);
-  return result.join(',');
-};
+// O(n) time on each function call | O(t) space
+// n === length of the string
+// t === total number of nodes created in the Trie
+class Trie {
+  children: Map<string, Trie>;
+  endOfWord: boolean;
+    constructor() {
+        this.children = new Map();
+        this.endOfWord = false;
+    }
 
-function dfsSerialize(node: TreeNode | null, result: string[]) {
-  if (node === null) {
-    result.push('null');
-    return;
-  }
+    /**
+     * Inserts a word into the trie.
+     * @param word The word to insert.
+    */
+    insert(word: string): void {
+      let current: Trie = this;
+      for (const char of word) {
+          if (!current.children.has(char)) {
+              current.children.set(char, new Trie());
+          }
+          current = current.children.get(char)!;
+      }
+      current.endOfWord = true;
+    }
 
-  result.push(node.val.toString());
-  dfsSerialize(node.left, result);
-  dfsSerialize(node.right, result);
+    /**
+     * Searches for a word in the trie.
+     * @param word The word to search for.
+     * @returns True if the word is found, false otherwise.
+    */
+    search(word: string): boolean {
+      let current: Trie = this;
+      for (const char of word) {
+          if (!current.children.has(char)) {
+              return false;
+          }
+          current = current.children.get(char)!;
+      }
+      return current.endOfWord;
+    }
+
+    /**
+     * Checks if there is any word in the trie that starts with the given prefix.
+     * @param prefix The prefix to check.
+     * @returns True if any word starts with the prefix, false otherwise.
+    */
+    startsWith(prefix: string): boolean {
+      let current: Trie = this;
+      for (const char of prefix) {
+          if (!current.children.has(char)) {
+              return false;
+          }
+          current = current.children.get(char)!;
+      }
+      return true;
+    }
 }
 
-/*
- * Decodes your encoded data to tree.
- */
-function deserialize(data: string): TreeNode | null {
-  const treeValues: string[] = data.split(',');
-  const idx = {val: 0};
-  dfsDeserialize(treeValues, idx);
-};
-
-function dfsDeserialize(treeValues: string[], idx: {val: number}): TreeNode | null  {
-  if (treeValues[idx.val] === 'null') {
-    idx.val++;
-    return null;
-  }
-
-  const newNode = new TreeNode(parseInt(treeValues[idx.val]));
-  idx.val++;
-  newNode.left = dfsDeserialize(treeValues, idx);
-  newNode.right = dfsDeserialize(treeValues, idx);
-  return newNode;
-}
-
-
 /**
- * Your functions will be called as such:
- * deserialize(serialize(root));
+ * Your Trie object will be instantiated and called as such:
+ * var obj = new Trie()
+ * obj.insert(word)
+ * var param_2 = obj.search(word)
+ * var param_3 = obj.startsWith(prefix)
  */
