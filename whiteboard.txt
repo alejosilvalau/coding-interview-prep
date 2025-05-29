@@ -1,67 +1,66 @@
-
-// O(n) time on each function call | O(t) space
-// n === length of the string
-// t === total number of nodes created in the Trie
-class Trie {
-  children: Map<string, Trie>;
-  endOfWord: boolean;
+class TrieNode {
+    childrens: TrieNode[] | null;
+    word: boolean;
     constructor() {
-        this.children = new Map();
-        this.endOfWord = false;
+        this.children = Array(26).fill(null);
+        this.word = false;
+    }
+}
+
+class WordDictionary {
+    root: TrieNode;
+    constructor() {
+      this.root = new TrieNode;
     }
 
-    /**
-     * Inserts a word into the trie.
-     * @param word The word to insert.
-    */
-    insert(word: string): void {
-      let current: Trie = this;
-      for (const char of word) {
-          if (!current.children.has(char)) {
-              current.children.set(char, new Trie());
+    getIndex(char: string) {
+      return char.chatCodeAt(0) - 'a'.charCodeAt(0)
+    }
+
+    addWord(word: string): void {
+      let currentNode = this.root;
+      for (const character of word) {
+          const idx = this.getIndex(character);
+          if (currentNode.childrens[idx] === null) {
+              currentNode.childrens[idx] = new TrieNode();
           }
-          current = current.children.get(char)!;
+          currentNode = currentNode.childrens[idx];
       }
-      current.endOfWord = true;
+      currentNode.word = true;
     }
 
-    /**
-     * Searches for a word in the trie.
-     * @param word The word to search for.
-     * @returns True if the word is found, false otherwise.
-    */
     search(word: string): boolean {
-      let current: Trie = this;
-      for (const char of word) {
-          if (!current.children.has(char)) {
-              return false;
-          }
-          current = current.children.get(char)!;
-      }
-      return current.endOfWord;
+      return this.depthFirstSearch(word, 0, this.root);
     }
 
-    /**
-     * Checks if there is any word in the trie that starts with the given prefix.
-     * @param prefix The prefix to check.
-     * @returns True if any word starts with the prefix, false otherwise.
-    */
-    startsWith(prefix: string): boolean {
-      let current: Trie = this;
-      for (const char of prefix) {
-          if (!current.children.has(char)) {
-              return false;
-          }
-          current = current.children.get(char)!;
-      }
-      return true;
+    depthFirstSearch(word: string, j: number, root: TreeNode) {
+        let currentNode = root;
+
+        for (let i = j; i < word.length; i++) {
+            const currentChar = word[i];
+            if (currentChar === '.') {
+                for (const child of cur.childrens) {
+                    if (child !== null && 
+                        this.depthFirstSearch(word, i + 1, child) && child.word) {
+                        return true;
+                    }
+                }
+                return false;
+            } else {
+                const idx = this.getIndex(currentChar);  
+                if (currentNode.childrens[idx] === null) {
+                    return false;
+                }
+                currentNode = currentNode.childrens[idx];
+            }
+        }
+        return currentNode.word;
     }
 }
 
 /**
- * Your Trie object will be instantiated and called as such:
- * var obj = new Trie()
- * obj.insert(word)
+ * Your WordDictionary object will be instantiated and called as such:
+ * var obj = new WordDictionary()
+ * obj.addWord(word)
  * var param_2 = obj.search(word)
- * var param_3 = obj.startsWith(prefix)
  */
