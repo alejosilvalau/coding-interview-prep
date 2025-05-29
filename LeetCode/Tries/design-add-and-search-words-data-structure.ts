@@ -1,8 +1,8 @@
 class TrieNode {
-  childrens: TrieNode[] | null[];
+  children: TrieNode[] | null[];
   word: boolean;
   constructor() {
-    this.childrens = Array(26).fill(null);
+    this.children = Array(26).fill(null);
     this.word = false;
   }
 }
@@ -24,10 +24,10 @@ class WordDictionary {
     let currentNode = this.root;
     for (const character of word) {
       const idx = this.getIndex(character);
-      if (currentNode.childrens[idx] === null) {
-        currentNode.childrens[idx] = new TrieNode();
+      if (currentNode.children[idx] === null) {
+        currentNode.children[idx] = new TrieNode();
       }
-      currentNode = currentNode.childrens[idx];
+      currentNode = currentNode.children[idx];
     }
     currentNode.word = true;
   }
@@ -45,9 +45,11 @@ class WordDictionary {
     // Iterate through the characters of the word starting from index j
     for (let i = j; i < word.length; i++) {
       const currentChar = word[i];
+      // If the current character is a dot, we need to use backtracking
+      // to check all possible characters at this position
       if (currentChar === '.') {
         // If the current character is a dot, we need to check all possible children
-        for (const child of currentNode.childrens) {
+        for (const child of currentNode.children) {
           // If there is a child node of the word length
           if (child !== null && this.depthFirstSearch(word, i + 1, child)) {
             // If any child returns true, we found a match
@@ -59,10 +61,10 @@ class WordDictionary {
       } else {
         // If the current character is not a dot, we check the specific child
         const idx = this.getIndex(currentChar);
-        if (currentNode.childrens[idx] === null) {
+        if (currentNode.children[idx] === null) {
           return false;
         }
-        currentNode = currentNode.childrens[idx];
+        currentNode = currentNode.children[idx];
       }
     }
     // After processing all characters, check if we are at the end of a word
