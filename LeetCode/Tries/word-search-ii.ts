@@ -20,6 +20,8 @@ namespace LeetCode.Tries.WordSearchII {
     }
   }
 
+  // It gives TLE, but the logic is correct.
+  // It needs to prune the words from the trie after having found them.
   function findWords(board: string[][], words: string[]): string[] {
     const trieRoot = new TrieNode();
 
