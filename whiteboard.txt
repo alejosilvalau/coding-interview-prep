@@ -1,24 +1,21 @@
 class Solution:
-  def combinationSum(self, candidates: List[int], target: int) -> List[List[int]]:
-      result = []
+  def combinationSum2(self, candidates: List[int], target: int) -> List[List[int]]:
+    res = []
+    candidates.sort()
 
-      def depth_first_search(index: int, current_combination: List[int], current_sum: int):
-          # If we hit the target, add a copy of the current combination
-          if current_sum == target:
-              result.append(current_combination.copy())
-              return
+    def dfs(idx, path, cur):
+      if cur == target:
+        res.append(path.copy())
+        return
+      for i in range(idx, len(candidates)):
+        if i > idx and candidates[i] == candidates[i - 1]:
+          continue
+        if cur + candidates[i] > target:
+          break
 
-          # If out of bounds or sum exceeded, stop exploring this path
-          if index >= len(candidates) or current_sum > target:
-              return
+        path.append(candidates[i])
+        dfs(i + 1, path, cur + candidates[i])
+        path.pop()
 
-          # Include the current number and stay at the same index (can reuse)
-          current_combination.append(candidates[index])
-          depth_first_search(index, current_combination, current_sum + candidates[index])
-          current_combination.pop()
-
-          # Skip the current number and move to the next index
-          depth_first_search(index + 1, current_combination, current_sum)
-
-      depth_first_search(0, [], 0)
-      return result
+    dfs(0, [], 0)
+    return res
