@@ -1,15 +1,20 @@
 class Solution:
-  def permute(self, nums: List[int]) -> List[List[int]]:
-    if len(nums) == 0:
-      return [[]]
+    def subsetsWithDup(self, nums: List[int]) -> List[List[int]]:
+      result = []
+      nums.sort()
 
-    rest_perms = self.permute(nums[1:])
-    result = []
+      def backtracking(idx, subset):
+        if idx === len(nums):
+          result.append(subset[::])
+          return 
 
-    for perm in rest_perms:
-      for i in range(len(perm) + 1):
-        new_perm = perm.copy()
-        new_perm.insert(i, nums[0])
-        result.append(new_perm)
+        subset.append(nums[idx])
+        backtracking(i + 1, subset)
 
-    return result
+        subset.pop()
+        while idx + 1 < len(nums) and nums[idx] === nums[idx + 1]:
+          i += 1
+        backtracking(i + 1, subset)
+
+      backtracking(0, [])
+      return result
