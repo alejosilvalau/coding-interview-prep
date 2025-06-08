@@ -1,33 +1,29 @@
-# O(m * 4^n) time | O(n) space
-# m == number of cells in the board
-# n == length of the word
+from typing import List
+
 class Solution:
-  def exist(self, board: List[List[str]], word: str) -> bool:
-    ROWS, COLS = len(board), len(board[0])
-    board_copy = board.copy()
+  def partition(self, s: str) -> List[List[str]]:
+    result, curr_partition = [], []
 
-    def backtracking(row, col, idx):
-      if idx == len(word):
-        return True
+    def backtracking(start_idx, end_idx):
+      if end_idx >= len(s):
+        if start_idx == end_idx:
+          result.append(curr_partition.copy())
+        return 
 
-      if (row < 0 or
-          col < 0 or
-          row >= ROWS or
-          col >= COLS or
-          word[idx] != board_copy[row][col] or
-          board_copy[row][col] == '#'):
+      if self.is_palindrome(s, start_idx, end_idx):
+        curr_partition.append(s[start_idx: end_idx + 1])
+        new_starting_idx = end_idx + 1
+        backtracking(new_starting_idx, new_starting_idx)
+        curr_partition.pop()
+      backtracking(start_idx, end_idx + 1)
+
+    backtracking(0, 0)
+    return result
+
+  def is_palindrome(self, word, left_idx, right_idx):
+    while left_idx < right_idx:
+      if word[left_idx] != word[right_idx]:
         return False
-
-      board_copy[row][col] = "#"
-      response = (backtracking(row + 1, col, idx + 1) or
-            backtracking(row - 1, col, idx + 1) or
-            backtracking(row, col + 1, idx + 1) or
-            backtracking(row, col - 1, idx + 1)):
-      board_copy[row][col] = word[idx]
-      return response
-
-    for row in range(ROWS):
-      for col in range(COLS):
-        if backtracking(row, col, 0):
-          return True;
-    return False
+      left_idx += 1
+      right_idx -= 1
+    return True
