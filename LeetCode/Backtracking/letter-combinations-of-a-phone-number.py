@@ -1,3 +1,13 @@
+from typing import List
+
+# Time complexity: O(n * 4^n)
+# Space complexity:
+#   O(n*4^n) for the result list, in the worst case where all digits map to 4 letters
+#   O(n) for the recursion stack
+#
+# n == length of the input string
+# letterCombinations should be named letter_combinations for better readability
+# but LeetCode uses camelCase for method names
 class Solution:
     def letterCombinations(self, digits: str) -> List[str]:
         combinations = []
@@ -13,9 +23,12 @@ class Solution:
         }
 
         def backtrack(index, current_combination):
+            # Base case: if the current combination is complete
             if len(current_combination) == len(digits):
                 combinations.append(current_combination)
                 return
+            
+            # Iterate through the letters corresponding to the current digit
             for letter in digit_to_letters[digits[index]]:
                 backtrack(index + 1, current_combination + letter)
 
