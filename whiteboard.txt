@@ -1,18 +1,14 @@
-class KthLargest:
+class Solution:
+  def lastStoneWeight(self, stones: List[int]) -> int:
+    
+    stonesMaxHeap = [-s for s in stones]
+    heapq.heapify(stonesMaxHeap)
 
-  def __init__(self, k: int, nums: List[int]):
-    self.minHeap, self.k = nums, k
-    heapq.heapify(self.min_heap)
-    while len(self.min_heap) > k:
-      heapq.heappop(self.min_heap)
+    while len(stones) > 1:
+      heaviestStone = heapq.heappop(stonesMaxHeap)
+      secondHeaviestStone = heappop(stonesMaxHeap)
+      if secondHeaviestStone > heaviestStone: 
+        heapq.heappush(stonesMaxHeap, heaviestStone, secondHeaviestStone)
 
-  def add(self, val: int) -> int:
-    heapq.heappush(self.min_heap, val)
-    if len(self.min_heap) > self.k:
-      heapq.heappop(self.min_heap)
-    return self.min_heap[0]
-
-
-# Your KthLargest object will be instantiated and called as such:
-# obj = KthLargest(k, nums)
-# param_1 = obj.add(val)
+    stonesMaxHeap.append(0)
+    return abs(stonesMaxHeap[0])      
