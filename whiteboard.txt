@@ -5,7 +5,7 @@ class Solution:
   def kClosest(self, points: List[List[int]], k: int) -> List[List[int]]:
     minHeap = []
     for x, y in points: 
-      # Calculate the distance by summing both axis to the power of two.
+      # Calculate the distance by summing both axes to the power of two.
       # Calculating the value of the square root is not relevant here since we just 
       # need to compare values, and not returning them
       distance = (x**2) + (y**2)
