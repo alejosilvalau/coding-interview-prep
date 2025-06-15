@@ -1,6 +1,10 @@
-from Types import List
-from heapq
+import heapq
+from typing import List
 
+
+# O(k * log n) time | O(n) space
+# n == number of points
+# k == number of closest points to return
 class Solution:
   def kClosest(self, points: List[List[int]], k: int) -> List[List[int]]:
     minHeap = []
@@ -16,6 +20,6 @@ class Solution:
     while k > 0:
       distance, x, y = heapq.heappop(minHeap)
       result.append([x, y]) 
-      k--
+      k -= 1
 
     return result
