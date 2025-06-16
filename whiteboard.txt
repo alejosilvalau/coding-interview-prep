@@ -1,21 +1,21 @@
-from Types import List
-from heapq
-
 class Solution:
-  def kClosest(self, points: List[List[int]], k: int) -> List[List[int]]:
-    minHeap = []
-    for x, y in points: 
-      # Calculate the distance by summing both axes to the power of two.
-      # Calculating the value of the square root is not relevant here since we just 
-      # need to compare values, and not returning them
-      distance = (x**2) + (y**2)
-      minHeap.append([distance, x, y])
+  def findKthLargest(self, nums: List[int], k: int) -> int:
+    k = len(nums) - k
 
-    heapq.heapify(minHeap)
-    result = []
-    while k > 0:
-      distance, x, y = heapq.heappop(minHeap)
-      result.append([x, y]) 
-      k--
+    def quickSelect(left, right):
+      pivot, i = nums[right], left
 
-    return result
+      for j in range(left, right):
+        if nums[i] <= pivot:
+          nums[i], nums[j] = nums[i], nums[j]
+          i += 1
+      nums[i], nums[right] = nums[right], nums[i]
+
+      if i > k:
+        return quickSelect(left, i - 1)
+      elif i < k: 
+        return quickSelect(i + 1, right)
+      else:
+        return nums[i]
+
+    return quickSelect(0, len(nums) - 1)      
