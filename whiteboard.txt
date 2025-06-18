@@ -1,21 +1,22 @@
 class Solution:
-  def findKthLargest(self, nums: List[int], k: int) -> int:
-    k = len(nums) - k
+  def leastInterval(self, tasks: List[str], n: int) -> int:
+    counter = Counter(tasks)
+    maxHeap = [-count for count in counter.values()]
+    heapq.heapify(maxHeap)
 
-    def quickSelect(left, right):
-      pivot, i = nums[right], left
+    currTime = 0
+    # Declare a queue, that will contain pairs of [-count, resumeTime]
+    queue = deque()
+    while maxHeap or queue:
+      currTime += 1
 
-      for j in range(left, right):
-        if nums[i] <= pivot:
-          nums[i], nums[j] = nums[i], nums[j]
-          i += 1
-      nums[i], nums[right] = nums[right], nums[i]
-
-      if i > k:
-        return quickSelect(left, i - 1)
-      elif i < k: 
-        return quickSelect(i + 1, right)
+      if not maxHeap:
+        currTime = queue[0][1]
       else:
-        return nums[i]
-
-    return quickSelect(0, len(nums) - 1)      
+        count = -heapq.heappop(maxHeap) - 1
+        if count: 
+          queue.append([-count, currTime + n])
+      
+      if queue and queue[0][1] == currTime:
+        heapq.heappush(maxHeap, queue.popleft()[0])
+    return currTime
