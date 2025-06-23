@@ -1,3 +1,9 @@
+import collections
+from typing import List
+
+# O(n * m) time | O(n * m) space
+# n == number of rows in the grid
+# m == number of columns in the grid
 class Solution: 
   def numIslands(self, grid: List[List[str]]) -> int: 
     if not grid:
