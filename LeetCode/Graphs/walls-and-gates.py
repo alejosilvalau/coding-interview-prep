@@ -28,7 +28,7 @@ class Solution:
     # the shortest distance to each empty room
     dist = 0
     while queue:
-      for i in range(len(queue))
+      for i in range(len(queue)):
         row, col = queue.popleft()
         grid[row][col] = dist
         addCell(row + 1, col)
