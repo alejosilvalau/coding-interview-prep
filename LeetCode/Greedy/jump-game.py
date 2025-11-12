@@ -1,9 +1,7 @@
-from ast import List
+from typing import List
 
 
-# O(n) time | O(1) space
-# n == length of the nums array
-# It uses the greedy technique
+# O(n) time | O(1)
 class Solution:
     def canJump(self, nums: List[int]) -> bool:
         goalIdx = len(nums) - 1
