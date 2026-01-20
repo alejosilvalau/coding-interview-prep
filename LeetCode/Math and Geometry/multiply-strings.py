@@ -3,6 +3,7 @@
 # n == length of num2
 
 # The space complexity comes from currentRowDigits
+# and the appended zeros in rowValStr
 class Solution:
     def multiply(self, num1: str, num2: str) -> str:
         # Edge case for zero
